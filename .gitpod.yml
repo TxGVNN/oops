@@ -1,0 +1,7 @@
+image:
+  file: .gitpod.Dockerfile
+tasks:
+  - command: |
+      tmate new-session -d
+      tmate wait tmate-ready
+      tmate display -p '#{tmate_ssh}'
