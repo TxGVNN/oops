@@ -1,1 +1,1 @@
-FROM txgvnn/gitpod
+FROM ghcr.io/txgvnn/gitpod:main
