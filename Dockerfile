@@ -1,4 +1,4 @@
-FROM gitpod/workspace-full:commit-8fc141dbdd92030a435ead06617c6d37651d8312
+FROM gitpod/workspace-base:commit-8fc141dbdd92030a435ead06617c6d37651d8312
 USER root
 RUN apt-get update && apt-get upgrade -y && \
     apt-get install -y build-essential git autoconf texinfo libgnutls28-dev libxml2-dev libncurses5-dev libjansson-dev libgccjit-9-dev libtool-bin libvterm-dev && \
@@ -6,7 +6,9 @@ RUN apt-get update && apt-get upgrade -y && \
     cd /src/emacs && \
     ./autogen.sh && \
     ./configure --with-x=no --without-gsettings --with-pop=no --with-modules --with-native-compilation --with-json && \
-    NATIVE_FULL_AOT=1 make -j8 && make install
+    NATIVE_FULL_AOT=1 make -j8 && make install && \
+    rm -rf /src/emacs
+COPY tmate-and-telegram.sh /usr/local/bin
 
 USER gitpod
 WORKDIR /home/gitpod
