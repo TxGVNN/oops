@@ -1,4 +1,4 @@
-FROM gitpod/workspace-base:commit-8fc141dbdd92030a435ead06617c6d37651d8312
+FROM gitpod/workspace-full:commit-8fc141dbdd92030a435ead06617c6d37651d8312
 USER root
 RUN apt-get update && apt-get upgrade -y && \
     apt-get install -y build-essential git autoconf texinfo libgnutls28-dev libxml2-dev libncurses5-dev libjansson-dev libgccjit-9-dev libtool-bin libvterm-dev && \
