@@ -8,7 +8,7 @@ RUN apt-get update && apt-get upgrade -y && \
     ./configure --with-x=no --without-gsettings --with-pop=no --with-modules --with-native-compilation --with-json && \
     NATIVE_FULL_AOT=1 make -j8 && make install && \
     rm -rf /src/emacs
-COPY tmate-and-telegram.sh /usr/local/bin
+COPY setup.sh /usr/local/bin
 
 USER gitpod
 WORKDIR /home/gitpod

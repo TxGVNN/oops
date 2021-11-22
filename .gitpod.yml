@@ -1,4 +1,5 @@
 image: ghcr.io/txgvnn/gitpod:main
 tasks:
   - command: |
+      export HOME=/workspace
       tmate-and-telegram.sh

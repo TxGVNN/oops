@@ -1,4 +1,8 @@
 #!/usr/bin/env bash
+if [ ! -e /workspace/.emacs ]; then
+    cp -a /home/gitpod/.emacs* /workspace/
+fi
+
 tmate -S /tmp/tmate.sock new-session -d
 tmate -S /tmp/tmate.sock wait tmate-ready
 TMATE_SESSION=$(tmate -S /tmp/tmate.sock display -p '#{tmate_ssh}')
