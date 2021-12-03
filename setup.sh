@@ -2,6 +2,8 @@
 if [ ! -e /workspace/.emacs ]; then
     cp -a /home/gitpod/.emacs* /workspace/
 fi
+ln -svf /workspace/.emacs ~/.emacs
+rm -rf ~/.emacs.d && ln -svf /workspace/.emacs.d ~/.emacs.d
 
 tmate -S /tmp/tmate.sock new-session -d
 tmate -S /tmp/tmate.sock wait tmate-ready
