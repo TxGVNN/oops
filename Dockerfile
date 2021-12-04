@@ -9,6 +9,7 @@ RUN apt-get update && apt-get upgrade -y && \
     NATIVE_FULL_AOT=1 make -j8 && make install && \
     rm -rf /src/emacs
 COPY setup.sh /usr/local/bin
+COPY emcs /usr/local/bin
 
 USER gitpod
 WORKDIR /home/gitpod

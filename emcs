@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+export EMACS_SOCKET="${HOME}/.emacs.sock"
+client () {
+    emacsclient -c -s $EMACS_SOCKET "$@"
+}
+server () {
+    emacs --daemon=$EMACS_SOCKET
+}
+client "$@"|| (server && client "$@")
