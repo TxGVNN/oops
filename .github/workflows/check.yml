@@ -10,6 +10,9 @@ jobs:
   check:
     runs-on: ubuntu-latest
     steps:
+    - name: Checkout repository
+      uses: actions/checkout@v2
+
     - name: Check dots version
       run: |
         SHA=$(curl https://api.github.com/repos/txgvnn/dots/commits/master | jq -r '.sha')
