@@ -13,8 +13,10 @@ COPY emcs /usr/local/bin
 
 USER gitpod
 WORKDIR /home/gitpod
+ENV DOTS_VERSION=b5d21d3ef37f977562244135f276756f02ed2743
 RUN sudo apt-get install -y ripgrep global screen tmux tmate socat zip dtach && \
-    wget https://txgvnn.github.io/sh/dots && \
-    bash dots && \
+    curl https://raw.githubusercontent.com/TxGVNN/dots/${DOTS_VERSION}/.bashrc >> .bashrc && \
+    wget https://raw.githubusercontent.com/TxGVNN/dots/${DOTS_VERSION}/.screenrc && \
+    wget https://raw.githubusercontent.com/TxGVNN/dots/${DOTS_VERSION}/.emacs && \
     emacs -q --batch -l ~/.emacs && \
     echo "(setq warning-suppress-types '((comp)))" > ~/.emacs.d/personal.el
