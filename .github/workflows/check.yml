@@ -17,7 +17,11 @@ jobs:
       run: |
         SHA=$(curl https://api.github.com/repos/txgvnn/dots/commits/master | jq -r '.sha')
         TAG="v$(date +%Y%m%d)"
+        echo "SHA=$SHA, TAG=$TAG"
         sed -i 's,DOTS_VERSION=.*,DOTS_VERSION='"$SHA"',' Dockerfile
+        git config user.name github-actions
+        git config user.email github-actions@github.com
+        git diff
         git add -u
         git commit -m "$TAG release"
         if [ $? -eq 0 ]; then
