@@ -1,4 +1,4 @@
-FROM gitpod/workspace-full:commit-8fc141dbdd92030a435ead06617c6d37651d8312
+FROM gitpod/workspace-full:2022-02-10-14-27-20
 USER root
 RUN install-packages build-essential git autoconf texinfo libgnutls28-dev libxml2-dev libncurses5-dev libjansson-dev libtool-bin libvterm-dev && \
     git clone https://github.com/emacs-mirror/emacs --depth 1 --branch emacs-28 /src/emacs && \
