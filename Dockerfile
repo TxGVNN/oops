@@ -11,7 +11,7 @@ COPY setup.sh emcs /usr/local/bin/
 
 USER gitpod
 WORKDIR /home/gitpod
-ENV DOTS_VERSION=9e7389cdb2427f75e257e208a1c60a51aca7e991
+ENV DOTS_VERSION=ccbd3daa24835c12383f96db2982a024910ed871
 RUN sudo install-packages direnv ripgrep global screen tmux tmate socat zip dtach dropbear rsync git-crypt && \
     curl https://raw.githubusercontent.com/TxGVNN/dots/${DOTS_VERSION}/.bashrc >> .bashrc && \
     wget https://raw.githubusercontent.com/TxGVNN/dots/${DOTS_VERSION}/.screenrc && \
