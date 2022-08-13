@@ -7,7 +7,7 @@ RUN install-packages build-essential git autoconf texinfo libgnutls28-dev libxml
     ./configure --with-x=no --without-gsettings --with-pop=no --with-modules --with-json && \
     make -j8 && make install && \
     rm -rf /src/emacs
-COPY setup.sh emcs /usr/local/bin/
+COPY setup.sh emcs setup.el /usr/local/bin/
 
 USER gitpod
 WORKDIR /home/gitpod
@@ -16,4 +16,4 @@ RUN sudo install-packages direnv ripgrep global screen tmux tmate socat zip dtac
     curl https://raw.githubusercontent.com/TxGVNN/dots/${DOTS_VERSION}/.bashrc >> .bashrc && \
     wget https://raw.githubusercontent.com/TxGVNN/dots/${DOTS_VERSION}/.screenrc && \
     wget https://raw.githubusercontent.com/TxGVNN/dots/${DOTS_VERSION}/.emacs && \
-    emacs -q --batch -l ~/.emacs
+    emacs -q --batch -l ~/.emacs -l /usr/local/bin/setup.el
