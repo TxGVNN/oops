@@ -1,0 +1,32 @@
+FROM ghcr.io/txgvnn/gitpod:latest
+
+# Dazzle does not rebuild a layer until one of its lines are changed. Increase this counter to rebuild this layer.
+ENV TRIGGER_REBUILD=1
+
+USER root
+
+# Install Desktop-ENV, tools
+RUN install-packages \
+	tigervnc-standalone-server tigervnc-xorg-extension dbus dbus-x11 xdg-utils x11-xserver-utils \
+	i3 i3blocks dmenu xinput rxvt-unicode-256color scrot fonts-font-awesome xdotool xclip libnotify-bin \
+	chromium-browser firefox
+
+
+# Add VNC startup
+COPY gp-vncsession /usr/bin/
+
+# Setup GUI enviroment
+RUN printf '%s\n' 'export SHELL=/bin/bash' > "$HOME/.bashrc" \
+	chmod 0755 "$(which gp-vncsession)" \
+	&& printf '%s\n' 'export DISPLAY=:0' \
+	'test -e "$GITPOD_REPO_ROOT" && gp-vncsession' >> "$HOME/.bashrc" \
+	&& git clone --depth 1 https://github.com/TxGVNN/i3-config "$HOME/.i3" \
+	&& echo "hostname" > "$HOME/.i3/bin/bar.d/hostname.sh" \
+	&& ln -sv "$HOME/.i3/Xresources" "$HOME/.Xresources" \
+	&& . "$HOME/.nix-profile/etc/profile.d/nix.sh" \
+	&& nix-env -i clipnotify-unstable    # for clipmenu
+
+# Add X11 dotfiles
+COPY --chown=gitpod:gitpod .xinitrc $HOME/
+
+USER gitpod
