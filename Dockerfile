@@ -1,18 +1,16 @@
 FROM gitpod/workspace-full:2022-11-15-17-00-18
 USER root
-RUN install-packages build-essential git autoconf texinfo libgnutls28-dev libxml2-dev libncurses5-dev libjansson-dev libtool-bin libvterm-dev && \
-    git clone https://github.com/emacs-mirror/emacs --depth 1 --branch emacs-28 /src/emacs && \
-    cd /src/emacs && \
-    ./autogen.sh && \
-    ./configure --with-x=no --without-gsettings --with-pop=no --with-modules --with-json && \
-    make -j8 && make install && \
-    rm -rf /src/emacs
-COPY setup.sh emcs setup.el /usr/local/bin/
+COPY setup.sh emcs setup.el guix-install.sh /usr/local/bin/
+RUN yes | bash /usr/local/bin/guix-install.sh
+RUN start-stop-daemon --user root --pidfile /tmp/guix.sock --background --start --exec /root/.config/guix/current/bin/guix-daemon -- --build-users-group=guixbuild --disable-chroot && \
+    sleep 1 && \
+    sudo -u gitpod guix package -i emacs-next emacs-guix direnv ripgrep global screen tmux tmate socat zip dtach dropbear rsync git-crypt && \
+    guix gc
 
 USER gitpod
 WORKDIR /home/gitpod
 ENV DOTS_VERSION=08e6b8cd776d67110d3d86262f5656f191fea423
-RUN sudo install-packages direnv ripgrep global screen tmux tmate socat zip dtach dropbear rsync git-crypt && \
+RUN . "/home/gitpod/.guix-profile/etc/profile" && \
     curl https://raw.githubusercontent.com/TxGVNN/dots/${DOTS_VERSION}/.bashrc >> .bashrc && \
     wget https://raw.githubusercontent.com/TxGVNN/dots/${DOTS_VERSION}/.screenrc && \
     wget https://raw.githubusercontent.com/TxGVNN/dots/${DOTS_VERSION}/.emacs && \
