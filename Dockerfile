@@ -4,7 +4,8 @@ COPY setup.sh emcs setup.el guix-install.sh /usr/local/bin/
 RUN yes | bash /usr/local/bin/guix-install.sh
 RUN start-stop-daemon --user root --pidfile /tmp/guix.sock --background --start --exec /root/.config/guix/current/bin/guix-daemon -- --build-users-group=guixbuild --disable-chroot && \
     sleep 1 && \
-    sudo -u gitpod guix package -i emacs-next emacs-guix direnv ripgrep global screen tmux tmate socat zip dtach dropbear rsync git-crypt && \
+    sudo -u gitpod guix package -i glibc-locales emacs-next emacs-guix emacs-geiser emacs-geiser-guile direnv \
+    ripgrep global screen tmux tmate socat zip dtach dropbear rsync git-crypt && \
     guix gc
 
 USER gitpod
