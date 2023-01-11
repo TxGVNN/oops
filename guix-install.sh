@@ -279,9 +279,7 @@ guix_get_bin_list()
     _debug "--- [ ${FUNCNAME[0]} ] ---"
 
     # Filter only version and architecture
-    bin_ver_ls=("$(wget "$gnu_url" --no-verbose -O- \
-        | sed -n -e 's/.*guix-binary-\([0-9.]*[a-z0-9]*\)\..*.tar.xz.*/\1/p' \
-        | sort -Vu)")
+    bin_ver_ls=("1.4.0")
 
     latest_ver="$(echo "${bin_ver_ls[0]}" \
                        | grep -oE "([0-9]{1,2}\.){2}[0-9]{1,2}[a-z0-9]*" \
