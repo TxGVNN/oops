@@ -7,6 +7,7 @@ ln -svf /workspace/.emacs ~/.emacs
 rm -rf ~/.emacs.d && ln -svf /workspace/.emacs.d ~/.emacs.d
 
 # run emacs damone
+. ~/.guix-profile/etc/profile
 export EMACS_SOCKET="${HOME}/.emacs.sock"
 emacs --daemon=$EMACS_SOCKET
 

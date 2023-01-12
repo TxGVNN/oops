@@ -12,6 +12,7 @@ USER gitpod
 WORKDIR /home/gitpod
 ENV DOTS_VERSION=08e6b8cd776d67110d3d86262f5656f191fea423
 RUN . "/home/gitpod/.guix-profile/etc/profile" && \
+    echo -e "if ! pgrep guix-daemon > /dev/null; then\n    sudo start-stop-daemon --user root --pidfile /tmp/guix.sock --background --start --exec /root/.config/guix/current/bin/guix-daemon -- --build-users-group=guixbuild --disable-chroot\nfi" >> .bashrc && \
     curl https://raw.githubusercontent.com/TxGVNN/dots/${DOTS_VERSION}/.bashrc >> .bashrc && \
     wget https://raw.githubusercontent.com/TxGVNN/dots/${DOTS_VERSION}/.screenrc && \
     wget https://raw.githubusercontent.com/TxGVNN/dots/${DOTS_VERSION}/.emacs && \
