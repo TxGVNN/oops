@@ -1,11 +1,12 @@
 FROM gitpod/workspace-full:2022-11-15-17-00-18
 USER root
-COPY setup.sh emcs setup.el guix-install.sh /usr/local/bin/
-RUN yes | bash /usr/local/bin/guix-install.sh
-RUN start-stop-daemon --user root --pidfile /tmp/guix.sock --background --start --exec /root/.config/guix/current/bin/guix-daemon -- --build-users-group=guixbuild --disable-chroot && \
+COPY ./ /src
+RUN yes | bash /src/guix-install.sh
+RUN ln -svf /src/setup.sh /usr/local/bin && \
+    start-stop-daemon --user root --pidfile /tmp/guix.sock --background --start --exec /root/.config/guix/current/bin/guix-daemon -- --build-users-group=guixbuild --disable-chroot && \
     sleep 1 && \
-    sudo -u gitpod guix package -i glibc-locales emacs-next emacs-guix emacs-geiser emacs-geiser-guile direnv \
-    ripgrep global screen tmux tmate socat zip dtach dropbear rsync git-crypt && \
+    sudo -u gitpod guix pull --commit=ef0613a81dca73602e702cb5f5444ee94566f983 && \
+    sudo -u gitpod ~/.config/guix/current/bin/guix package -L /src -m /src/manifest.scm && \
     guix gc
 
 USER gitpod
@@ -16,6 +17,8 @@ RUN . "/home/gitpod/.guix-profile/etc/profile" && \
     curl https://raw.githubusercontent.com/TxGVNN/dots/${DOTS_VERSION}/.bashrc >> .bashrc && \
     wget https://raw.githubusercontent.com/TxGVNN/dots/${DOTS_VERSION}/.screenrc && \
     wget https://raw.githubusercontent.com/TxGVNN/dots/${DOTS_VERSION}/.emacs && \
-    emacs -q --batch -l ~/.emacs -l /usr/local/bin/setup.el && \
+    mkdir ~/.emacs.d -p && \
+    cp /src/early-init.el ~/.emacs.d/ && \
+    emacs -q --batch -l ~/.emacs -l /src/setup.el && \
     npm install -g yaml-language-server typescript-language-server bash-language-server && \
     pip install python-lsp-server[all]
