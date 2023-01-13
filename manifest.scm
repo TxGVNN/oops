@@ -40,6 +40,7 @@
         "emacs-magit"
         "emacs-project"
         "emacs-consult"
+        "emacs-crux"
         "emacs-vertico"
         "rsync"
         "dropbear"

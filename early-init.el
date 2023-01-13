@@ -33,5 +33,5 @@
 (push 'volatile-highlights package-activated-list)
 (push 'vundo package-activated-list)
 (push 'yasnippet package-activated-list)
-;; (push 'crux package-activated-list)
+(push 'crux package-activated-list)
 ;; (push 'perspective package-activated-list)
