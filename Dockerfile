@@ -1,7 +1,8 @@
 FROM gitpod/workspace-full:2022-11-15-17-00-18
 USER root
-COPY ./ /src
+COPY ./guix-install.sh /src/
 RUN yes | bash /src/guix-install.sh
+COPY ./ /src
 RUN start-stop-daemon --user root --pidfile /tmp/guix.sock --background --start --exec /root/.config/guix/current/bin/guix-daemon -- --build-users-group=guixbuild --disable-chroot && \
     sleep 1 && \
     sudo -u gitpod guix pull --commit=ef0613a81dca73602e702cb5f5444ee94566f983 && \

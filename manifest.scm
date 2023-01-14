@@ -42,6 +42,7 @@
         "emacs-consult"
         "emacs-crux"
         "emacs-vertico"
+	"emacs-perspective@2.16-7-20230114"
         "rsync"
         "dropbear"
         "socat"
