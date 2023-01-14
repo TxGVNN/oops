@@ -57,3 +57,43 @@ some utility functions, and commands using that infrastructure.")
     (description
      "@code{crux} provides a collection of useful functions for Emacs.")
     (license license:gpl3+)))
+
+
+(define-public emacs-perspective
+  (package
+    (name "emacs-perspective")
+    (version "2.16-7-20230114")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/nex3/perspective-el")
+             (commit "1c257f3")))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0rgkajcw7fismqmww1r0yy84hnqripx5dwklf2mfm042whn9bqgf"))
+       (patches
+        (parameterize
+            ((%patch-path
+              (map (lambda (directory)
+                     (string-append directory "/guxti/packages/patches"))
+                   %load-path)))
+          (search-patches "emacs-perspective.patch")))))
+    (build-system emacs-build-system)
+    (arguments
+     `(#:tests? #t
+       #:test-command '("emacs" "-Q" "-batch" "-L" "."
+                        "-l" "test/test-perspective.el"
+                        "-f" "ert-run-tests-batch-and-exit")))
+    (home-page "https://github.com/nex3/perspective-el")
+    (synopsis "Switch between named \"perspectives\"")
+    (description
+     "This package provides tagged workspaces in Emacs, similar to workspaces in
+windows managers such as Awesome and XMonad.  @code{perspective.el} provides
+multiple workspaces (or \"perspectives\") for each Emacs frame.  Each
+perspective is composed of a window configuration and a set of buffers.
+Switching to a perspective activates its window configuration, and when in a
+perspective only its buffers are available by default.")
+    ;; This package is released under the same license as Emacs (GPLv3+) or
+    ;; the Expat license.
+    (license license:gpl3+)))
