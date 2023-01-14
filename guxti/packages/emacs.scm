@@ -6,8 +6,7 @@
   #:use-module ((guix licenses) #:prefix license:)
   #:use-module (gnu packages)
   #:use-module (gnu packages texinfo)
-  #:use-module (gnu packages emacs-xyz)
-  )
+  #:use-module (gnu packages emacs-xyz))
 
 (define-public emacs-project
   (package
@@ -27,7 +26,6 @@
      "This library contains generic infrastructure for dealing with projects,
 some utility functions, and commands using that infrastructure.")
     (license license:gpl3+)))
-
 
 (define-public emacs-crux
   (package
@@ -57,7 +55,6 @@ some utility functions, and commands using that infrastructure.")
     (description
      "@code{crux} provides a collection of useful functions for Emacs.")
     (license license:gpl3+)))
-
 
 (define-public emacs-perspective
   (package
@@ -97,3 +94,34 @@ perspective only its buffers are available by default.")
     ;; This package is released under the same license as Emacs (GPLv3+) or
     ;; the Expat license.
     (license license:gpl3+)))
+
+(define-public emacs-magit-todos
+  (package
+    (name "emacs-magit-todos")
+    (version "1.5.3-19-gc5030cc")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/alphapapa/magit-todos")
+             (commit "c5030cc")))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32
+         "0j32zslcbiaq2a6ppyzdq4x59payya5hzd2kpw3mdj0p479byz19"))))
+    (build-system emacs-build-system)
+    (propagated-inputs
+     (list emacs-async
+           emacs-dash
+           emacs-f
+           emacs-hl-todo
+           emacs-magit
+           emacs-pcre2el
+           emacs-s))
+    (home-page "https://github.com/alphapapa/magit-todos")
+    (synopsis "Show source files' TODOs (and FIXMEs, etc) in Magit status buffer")
+    (description "This package displays keyword entries from source code
+comments and Org files in the Magit status buffer.  Activating an item jumps
+to it in its file.  By default, it uses keywords from @code{hl-todo}, minus a
+few (like NOTE).")
+    (license license:gpl3)))

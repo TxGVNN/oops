@@ -1,3 +1,4 @@
+(setq package-directory-list '("~/.guix-profile/share/emacs/site-lisp"))
 (push 'ace-window package-activated-list)
 (push 'anzu package-activated-list)
 (push 'avy package-activated-list)
