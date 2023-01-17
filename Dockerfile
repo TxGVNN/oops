@@ -5,8 +5,9 @@ RUN yes | bash /src/guix-install.sh
 COPY ./ /src
 RUN start-stop-daemon --user root --pidfile /tmp/guix.sock --background --start --exec /root/.config/guix/current/bin/guix-daemon -- --build-users-group=guixbuild --disable-chroot && \
     sleep 1 && \
+    sudo -u gitpod cp /src/channels.scm ~/.config/guix/channels.scm && \
     sudo -u gitpod guix pull --commit=ef0613a81dca73602e702cb5f5444ee94566f983 && \
-    sudo -u gitpod ~/.config/guix/current/bin/guix package -L /src -m /src/manifest.scm && \
+    sudo -u gitpod ~/.config/guix/current/bin/guix package -m /src/manifest.scm && \
     guix gc
 
 USER gitpod
