@@ -65,5 +65,6 @@
         "ripgrep"
         "rsync"
         "socat"
+        "screen"
         "tmate"
         "zip"))

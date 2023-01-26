@@ -6,8 +6,11 @@ fi
 ln -svf /workspace/.emacs ~/.emacs
 rm -rf ~/.emacs.d && ln -svf /workspace/.emacs.d ~/.emacs.d
 
-# run emacs damone
+# source
 . ~/.guix-profile/etc/profile
+export GUIX_LOCPATH="$HOME/.guix-profile/lib/locale"
+
+# run emacs daemon
 export EMACS_SOCKET="${HOME}/.emacs.sock"
 emacs --daemon=$EMACS_SOCKET
 
