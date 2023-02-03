@@ -13,7 +13,7 @@ RUN start-stop-daemon --user root --pidfile /tmp/guix.sock --background --start 
 
 USER gitpod
 WORKDIR /home/gitpod
-ENV DOTS_VERSION=163efb72daef27f1f417c72a78ee62a7827a7845
+ENV DOTS_VERSION=1a092a2699559c8d5381a9404cdc663cd3125acd
 RUN . "$HOME/.guix-profile/etc/profile" && \
     curl https://raw.githubusercontent.com/TxGVNN/dots/${DOTS_VERSION}/.bashrc >> .bashrc && \
     wget https://raw.githubusercontent.com/TxGVNN/dots/${DOTS_VERSION}/.screenrc && \
