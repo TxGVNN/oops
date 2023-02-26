@@ -23,7 +23,7 @@
         "emacs-avy"
         "emacs-beacon"
         "emacs-cape"
-        "emacs-consult@0.32.20230224"
+        "emacs-consult@0.31.20230224"
         "emacs-corfu"
         "emacs-corfu-terminal"
         "emacs-diredfl"
