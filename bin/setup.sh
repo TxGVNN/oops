@@ -10,10 +10,6 @@ rm -rf ~/.emacs.d && ln -svf /workspace/.emacs.d ~/.emacs.d
 . ~/.guix-profile/etc/profile
 export GUIX_LOCPATH="$HOME/.guix-profile/lib/locale"
 
-# run emacs daemon
-export EMACS_SOCKET="${HOME}/.emacs.sock"
-emacs --daemon=$EMACS_SOCKET
-
 # run tmate
 tmate -S "${HOME}/.tmate.sock" new-session -d emcs
 tmate -S "${HOME}/.tmate.sock" wait tmate-ready
@@ -22,3 +18,7 @@ TMATE_SESSION=$(tmate -S "${HOME}/.tmate.sock" display -p '#{tmate_ssh}')
 # send session to telegram
 message="${GITPOD_WORKSPACE_CONTEXT_URL}\n\n${GITPOD_WORKSPACE_URL}\n\n${TMATE_SESSION}"
 curl "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" --data "{\"chat_id\":\"$TELEGRAM_CHAT_ID\", \"text\":\"$message\"}" -H 'content-type: application/json'
+
+# run emacs daemon
+export EMACS_SOCKET="${HOME}/.emacs.sock"
+emacs --daemon=$EMACS_SOCKET

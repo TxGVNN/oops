@@ -36,3 +36,5 @@
 (push 'yasnippet package-activated-list)
 (push 'crux package-activated-list)
 (push 'perspective package-activated-list)
+(push 'forge package-activated-list)
+(push 'closql package-activated-list)

@@ -8,8 +8,7 @@ RUN start-stop-daemon --user root --pidfile /tmp/guix.sock --background --start 
     sudo -u gitpod mkdir -p ~/.config/guix && \
     sudo -u gitpod cp /src/channels.scm ~/.config/guix/channels.scm && \
     sudo -u gitpod guix pull && \
-    sudo -u gitpod ~/.config/guix/current/bin/guix package -m /src/manifest.scm && \
-    guix gc
+    sudo -u gitpod ~/.config/guix/current/bin/guix package -m /src/manifest.scm
 
 USER gitpod
 WORKDIR /home/gitpod
