@@ -6,5 +6,5 @@
       (channel
        (name 'guxti)
        (branch "master")
-       (commit "181e76f73a760479ac4d942fcd5358bf50efd072")
+       (commit "8d4f967daaca5b9784b996ba02d80e6756044a63")
        (url "https://github.com/TxGVNN/guxti")))

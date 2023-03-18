@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-export EMACS_SOCKET="${HOME}/.emacs.sock"
+export EMACS_SOCKET="server"
 client () {
     emacsclient -c -s $EMACS_SOCKET "$@"
 }

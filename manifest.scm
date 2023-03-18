@@ -20,6 +20,8 @@
         "dtach"
         "emacs-ace-window"
         "emacs-anzu"
+        "emacs-eev"
+        "emacs-combobulate"
         "emacs-avy"
         "emacs-beacon"
         "emacs-cape"
