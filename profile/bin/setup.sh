@@ -18,20 +18,22 @@ _link(){
 }
 
 PROFILE="/workspace/.profile"
-cp /src/profile $PROFILE -a
-mkdir -p "${PROFILE}"
+if [ ! -d "$PROFILE" ]; then
+    cp /src/profile ${PROFILE} -a
+fi
 
 _link "$PROFILE/.emacs.d" ~/.emacs.d
+_link "$PROFILE/.screenrc" ~/.screenrc
 _link "$PROFILE/.bashrc" ~/.bashrc
 _link "$PROFILE/.bash_profile" ~/.bash_profile
 _link "$PROFILE/.bash_logout" ~/.bash_logout
 
 # source
-. ~/.guix-profile/etc/profile
-export GUIX_LOCPATH="$HOME/.guix-profile/lib/locale"
+. "${HOME}/.guix-profile/etc/profile"
+export GUIX_LOCPATH="${HOME}/.guix-profile/lib/locale"
 
 # run tmate
-tmate -S "${HOME}/.tmate.sock" new-session -d emcs
+tmate -S "${HOME}/.tmate.sock" new-session -d
 tmate -S "${HOME}/.tmate.sock" wait tmate-ready
 TMATE_SESSION=$(tmate -S "${HOME}/.tmate.sock" display -p '#{tmate_ssh}')
 
@@ -39,5 +41,5 @@ TMATE_SESSION=$(tmate -S "${HOME}/.tmate.sock" display -p '#{tmate_ssh}')
 message="${GITPOD_WORKSPACE_CONTEXT_URL}\n\n${GITPOD_WORKSPACE_URL}\n\n${TMATE_SESSION}"
 curl "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" --data "{\"chat_id\":\"$TELEGRAM_CHAT_ID\", \"text\":\"$message\"}" -H 'content-type: application/json'
 
-# Run emacs daemon
-emacs --daemon
+# Run screen with emacs
+sudo su - gitpod -c 'screen -S main -dm emcs'
