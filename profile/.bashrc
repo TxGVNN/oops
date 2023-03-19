@@ -2,12 +2,6 @@
 # see /usr/share/doc/bash/examples/startup-files (in the package bash-doc)
 # for examples
 
-# If not running interactively, don't do anything
-case $- in
-    *i*) ;;
-    *) return;;
-esac
-
 # don't put duplicate lines or lines starting with space in the history.
 # See bash(1) for more options
 HISTCONTROL=ignoreboth
@@ -115,8 +109,6 @@ if ! shopt -oq posix; then
         . /etc/bash_completion
     fi
 fi
-
-for i in $(ls -A $HOME/.bashrc.d/); do source $HOME/.bashrc.d/$i; done
 
 [ "$GTX_DIR" ] || GTX_DIR="${PWD}/../"
 if ! echo "$PATH" | grep -q "$GTX_DIR" > /dev/null 2>&1; then
@@ -484,3 +476,6 @@ export XMODIFIERS=@im=ibus
 export QT_IM_MODULE=ibus
 export LOCATE_PATH=~/.locate.db
 export SSL_CERT_FILE=/etc/ssl/certs/ca-certificates.crt
+
+export PATH=/workspace/.profile/bin:/src/profile/bin:$PATH
+for i in $(ls -A $HOME/.bashrc.d/); do source $HOME/.bashrc.d/$i; done
