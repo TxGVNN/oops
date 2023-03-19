@@ -1,4 +1,4 @@
-FROM gitpod/workspace-full:2022-11-15-17-00-18
+FROM gitpod/workspace-full:2023-03-06-18-43-51
 USER root
 COPY ./guix-install.sh /src/
 RUN yes | bash /src/guix-install.sh
