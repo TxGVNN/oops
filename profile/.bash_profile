@@ -2,4 +2,6 @@
 
 [[ -s "$HOME/.rvm/scripts/rvm" ]] && source "$HOME/.rvm/scripts/rvm" # Load RVM into a shell session *as a function*
 
-if [[ -n $SSH_CONNECTION ]]; then cd "/workspace/gitpod"; fi
+if [[ -n $SSH_CONNECTION ]] && [[ -d $GITPOD_REPO_ROOT ]]; then
+    cd "$GITPOD_REPO_ROOT" || return ;
+fi
