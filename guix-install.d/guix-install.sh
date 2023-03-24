@@ -29,6 +29,22 @@
 
 # We require Bash but for portability we'd rather not use /bin/bash or
 # /usr/bin/env in the shebang, hence this hack.
+
+# Environment variables
+#
+# GUIX_BINARY_FILE_NAME
+#
+# Can be used to override the automatic download mechanism and point
+# to a local Guix binary archive filename like
+# "/tmp/guix-binary-1.4.0rc2.armhf-linux.tar.xz"
+#
+# GUIX_ALLOW_OVERWRITE
+#
+# Instead of aborting to avoid overwriting a previous installations,
+# allow copying over /var/guix or /gnu.  This can be useful when the
+# installation required the user to extract Guix packs under /gnu to
+# satisfy its dependencies.
+
 if [ "x$BASH_VERSION" = "x" ]
 then
     exec bash "$0" "$@"
@@ -105,9 +121,7 @@ die()
 # answering "yes".
 # $1: The prompt question.
 prompt_yes_no() {
-    local -l yn
-    read -rp "$1 [Y/n]" yn
-    [[ ! $yn || $yn = y || $yn = yes ]] || return 1
+    return 0
 }
 
 chk_require()
@@ -279,19 +293,11 @@ guix_get_bin_list()
     _debug "--- [ ${FUNCNAME[0]} ] ---"
 
     # Filter only version and architecture
-    bin_ver_ls=("1.4.0")
-
-    latest_ver="$(echo "${bin_ver_ls[0]}" \
-                       | grep -oE "([0-9]{1,2}\.){2}[0-9]{1,2}[a-z0-9]*" \
-                       | tail -n1)"
+    latest_ver="1.4.0"
 
     default_ver="guix-binary-${latest_ver}.${ARCH_OS}"
 
-    if [[ "${#bin_ver_ls}" -ne "0" ]]; then
-        _msg "${PAS}Release for your system: ${default_ver}"
-    else
-        die "Could not obtain list of Guix releases."
-    fi
+    _msg "${PAS}Release for your system: ${default_ver}"
 
     # Use default to download according to the list and local ARCH_OS.
     BIN_VER="${default_ver}"
@@ -334,16 +340,15 @@ sys_create_store()
 
     _debug "--- [ ${FUNCNAME[0]} ] ---"
 
-    if [[ -e "/var/guix" || -e "/gnu" ]]; then
+    if [[ -z $GUIX_ALLOW_OVERWRITE && (-e /var/guix || -e /gnu) ]]; then
         die "A previous Guix installation was found.  Refusing to overwrite."
+    else
+        _msg "${WAR}Overwriting existing installation!"
     fi
 
     cd "$tmp_path"
-    tar --extract --file "$pkg" && _msg "${PAS}unpacked archive"
-
     _msg "${INF}Installing /var/guix and /gnu..."
-    mv "${tmp_path}/var/guix" /var/
-    mv "${tmp_path}/gnu" /
+    tar --extract --file "$pkg" -C /
 
     _msg "${INF}Linking the root user's profile"
     mkdir -p ~root/.config/guix
@@ -610,18 +615,6 @@ This script installs GNU Guix on your system
 
 https://www.gnu.org/software/guix/
 EOF
-    # Don't use ‘read -p’ here!  It won't display when run non-interactively.
-    echo -n "Press return to continue..."$'\r'
-    if ! read -r char; then
-	echo
-	die "Can't read standard input.  Hint: don't pipe scripts into a shell."
-    fi
-    if [ "$char" ]; then
-	echo
-	echo "...that ($char) was not a return!"
-	_msg "${WAR}Use newlines to automate installation, e.g.: yes '' | ${0##*/}"
-	_msg "${WAR}Any other method is unsupported and likely to break in future."
-    fi
 }
 
 main()
