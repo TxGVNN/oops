@@ -94,6 +94,7 @@
         "guile"
         "node"
         "python"
+        "python-lsp-server"
         ;; tools
         "direnv"
         "dropbear"
