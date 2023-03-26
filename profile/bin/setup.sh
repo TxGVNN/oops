@@ -22,11 +22,9 @@ if [ ! -d "$PROFILE" ]; then
     cp /src/profile ${PROFILE} -a
 fi
 
-_link "$PROFILE/.emacs.d" ~/.emacs.d
 _link "$PROFILE/.screenrc" ~/.screenrc
-_link "$PROFILE/.bashrc" ~/.bashrc
-_link "$PROFILE/.bash_profile" ~/.bash_profile
-_link "$PROFILE/.bash_logout" ~/.bash_logout
+cd $PROFILE/guix-install.d
+guix home reconfigure home.scm
 
 for i in $(ls -A "$PROFILE/.bashrc.d/"); do
     _link "$PROFILE/.bashrc.d/$i" $HOME/.bashrc.d/$i
