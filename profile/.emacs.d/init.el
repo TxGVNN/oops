@@ -229,9 +229,23 @@
 (use-package magit
   :ensure t :defer t
   :config
-  (defun magit-find-file-on-project (project rev path)
-    (let ((default-directory project))
-      (magit-find-file rev path)))
+  (defun magit-find-file-at-path (project rev path)
+    (let ((default-directory project)
+          (line (string-to-number (car (last (split-string path "#L"))))))
+      (with-current-buffer
+          (magit-find-file rev (car (split-string path "#")))
+        (goto-char (point-min))
+        (forward-line (1- line)))))
+  (defun magit-link-at-point ()
+    (interactive)
+    (let* ((link (magit-with-toplevel
+                   (list (abbreviate-file-name default-directory)
+                         (magit-rev-parse "--short" "HEAD")
+                         (magit-file-relative-name))))
+           (magit-link (format "(magit-find-file-at-path \"%s\" \"%s\" \"%s#L%s\")"
+                               (car link) (cadr link) (caddr link) (line-number-at-pos))))
+      (kill-new magit-link)
+      (message magit-link)))
   :bind
   ("C-x v f" . magit-find-file))
 (use-package git-link
@@ -291,8 +305,6 @@
         ("j" . project-jump-persp)
         ("T" . project-vterm)
         ("M-x" . project-execute-extended-command)
-        ("o" . project-org-capture)
-        ("O" . project-org-go)
         ("v" . magit-project-status))
   :config
   (advice-add #'project-find-file :override #'project-find-file-cd)
@@ -343,7 +355,7 @@
   (defun project-term ()
     "project-term."
     (interactive)
-    (let* ((default-directory (cdr (project-current t)))
+    (let* ((default-directory (project-root (project-current t)))
            (termname (format "%s-term" (file-name-nondirectory
                                         (directory-file-name default-directory))))
            (buffer (format "*%s*" termname)))
@@ -354,7 +366,7 @@
   (defun project-vterm ()
     "project-vterm."
     (interactive)
-    (let* ((default-directory (cdr (project-current t)))
+    (let* ((default-directory (project-root (project-current t)))
            (buffer (format "*%s-vterm*" (file-name-nondirectory
                                          (directory-file-name default-directory)))))
       (unless (get-buffer buffer)
@@ -367,20 +379,6 @@
     (require 'embark nil t)
     (embark-chroot (project-root (project-current t))))
   (define-key project-prefix-map (kbd "/") #'embark-on-project)
-  ;; org-capture
-  (defun project-org-capture ()
-    "Capture to project dir."
-    (interactive)
-    (unless (bound-and-true-p org-default-notes-file) (require 'org-capture))
-    (let* ((project (project-root (project-current t)))
-           (org-default-notes-file (concat project "tasks.org")))
-      (call-interactively 'org-capture)))
-  (defun project-org-go ()
-    "Jump to project org file."
-    (interactive)
-    (let* ((project (project-root (project-current t)))
-           (org-default-notes-file (concat project "tasks.org")))
-      (find-file org-default-notes-file)))
   (defun project-jump-persp ()
     "Just jump to persp of project."
     (interactive)
@@ -398,6 +396,15 @@
           (magit-project-status "git")
           (project-jump-persp "jump")
           (embark-on-project "embark"))))
+(use-package project-tasks
+  :ensure t :defer t
+  :after (project)
+  :init (add-to-list 'project-switch-commands '(project-tasks "tasks") t)
+  :bind
+  (:map project-prefix-map
+        ("P" . project-tasks)
+        ("o" . project-tasks-capture)
+        ("O" . project-tasks-jump)))
 (use-package envrc ;; direnv > 2.7
   :ensure t :defer t
   :config
@@ -478,14 +485,15 @@
       "Override compilation-read-command (COMMAND)."
       (let* ((persp-name (if (bound-and-true-p persp-mode)
                              (persp-name (persp-curr)) "0"))
-             (compile-history
-              (ring-elements (persp--get-command-history persp-name))))
-        (ring-insert (persp--get-command-history persp-name)
-                     (read-shell-command (format "Compile [%s]: " default-directory)
-                                         (or (car compile-history) command)
-                                         (if (equal (car compile-history) command)
-                                             '(compile-history . 1)
-                                           'compile-history))))))
+             (history
+              (ring-elements (persp--get-command-history persp-name)))
+             (command (or (car history) command))
+             (input (read-shell-command
+                     (format "Compile (%s) (%s):"
+                             (pretty--abbreviate-directory default-directory) command) nil
+                     'history command)))
+        (ring-remove+insert+extend (persp--get-command-history persp-name)
+                                   (if (string-empty-p input) command input)))))
   (with-eval-after-load 'savehist
     (add-to-list 'savehist-additional-variables 'persp-compile-history)))
 ;; project-temp-root
@@ -628,8 +636,8 @@
 (use-package dumb-jump
   :ensure t :defer t
   :init
-  (with-eval-after-load 'xref
-    (add-to-list 'xref-backend-functions #'dumb-jump-xref-activate)))
+  (add-hook 'eglot-managed-mode-hook (lambda () (add-hook 'xref-backend-functions 'dumb-jump-xref-activate t t)))
+  (add-hook 'xref-backend-functions #'dumb-jump-xref-activate))
 (use-package eglot :defer t
   :init
   (add-hook 'python-ts-mode-hook #'eglot-ensure)
@@ -808,11 +816,10 @@
   (setq ediff-window-setup-function 'ediff-setup-windows-plain)
   (setq ediff-split-window-function 'split-window-horizontally))
 (use-package savehist
-  :ensure t
-  :config (savehist-mode)
-  (add-hook 'savehist-save-hook
-            (lambda () (setq savehist-minibuffer-history-variables
-                             (delete 'eww-prompt-history savehist-minibuffer-history-variables)))))
+  :ensure t :defer t
+  :custom (savehist-ignored-variables '(eww-prompt-history compile-command))
+  :hook (after-init . savehist-mode))
+
 (use-package autorevert
   ;; revert buffers when their files/state have changed
   :hook (focus-in . doom-auto-revert-buffers-h)
@@ -836,23 +843,11 @@
       (with-current-buffer buf (doom-auto-revert-buffer-h)))))
 (use-package compile :defer t
   :init (global-set-key (kbd "C-x m") 'compile)
+  :custom
+  (compilation-always-kill t)       ; kill compilation process before starting another
+  (compilation-ask-about-save nil)  ; save all buffers on `compile'
+  (compilation-scroll-output t)
   :config
-  (setq compilation-always-kill t       ; kill compilation process before starting another
-        compilation-ask-about-save nil  ; save all buffers on `compile'
-        compilation-scroll-output t)
-  (defun compile-with-nohistory (command &optional comint)
-    "Override compile(COMMAND &optional COMINT)."
-    (interactive
-     (list
-      (let ((command (eval compile-command)))
-        (if (or compilation-read-command current-prefix-arg)
-            (compilation-read-command command) command))
-      (consp current-prefix-arg)))
-    (save-some-buffers (not compilation-ask-about-save)
-                       compilation-save-buffers-predicate)
-    (setq-default compilation-directory default-directory)
-    (compilation-start command comint))
-  (advice-add #'compile :override #'compile-with-nohistory)
   (defun doom-apply-ansi-color-to-compilation-buffer-h ()
     "Applies ansi codes to the compilation buffers."
     (with-silent-modifications
@@ -877,9 +872,9 @@
         gnus-sum-thread-tree-single-leaf     "└─> "))
 
 ;;; THEMES
-(use-package dracula-theme
-  :ensure t
-  :init (load-theme 'dracula t))
+(use-package modus-vivendi-theme
+  :demand
+  :init (load-theme 'modus-vivendi t))
 
 ;; MODELINE
 (setq mode-line-position
@@ -921,6 +916,12 @@
                 (list '("::" (:eval (propertize (or (which-function) "") 'face 'font-lock-function-name-face))))))
 
 ;;; CUSTOMIZE
+(defun pretty--abbreviate-directory (dir)
+  "Clone `consult--abbreviate-directory(DIR)'."
+  (save-match-data
+    (let ((adir (abbreviate-file-name dir)))
+      (if (string-match "/\\([^/]+\\)/\\([^/]+\\)/\\'" adir)
+          (format "…/%s/%s/" (match-string 1 adir) (match-string 2 adir)) adir))))
 (defun add-to-hooks (func &rest hooks)
   "Add FUNC to mutil HOOKS."
   (dolist (hook hooks) (add-hook hook func)))
@@ -1233,8 +1234,10 @@
   :config
   (add-to-list 'hidden-minor-modes 'org-indent-mode)
   (define-key org-src-mode-map (kbd "C-c C-c") #'org-edit-src-exit)
-  (setq org-babel-load-languages (quote ((emacs-lisp . t) (shell . t)))
-        org-enforce-todo-dependencies t
+  (org-babel-do-load-languages
+   'org-babel-do-load-languagesel-load-languages
+   '((emacs-lisp . t) (shell . t)))
+  (setq org-enforce-todo-dependencies t
         org-adapt-indentation nil
         org-odd-levels-only nil
         org-hide-leading-stars t
