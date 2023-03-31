@@ -461,11 +461,6 @@ alias em="emacs -nw"
 alias psc="ps xawf -eo pid,ppid,user,cgroup,args"
 stty -ixon
 
-# direnv
-if type -p direnv &>/dev/null; then
-    eval "$(direnv hook bash)"
-fi
-
 ## Check pseudoterminal or not?
 export TERM=xterm-256color
 if [[ $(tty) != */dev/pts/* ]]; then
