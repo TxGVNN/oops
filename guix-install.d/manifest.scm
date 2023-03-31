@@ -43,6 +43,7 @@
         "emacs-perspective@2.16.20230114"
         "emacs-pinentry"
         "emacs-project"
+        "emacs-project-tasks"
         "emacs-rainbow-delimiters"
         "emacs-rainbow-mode"
         "emacs-rg"
