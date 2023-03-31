@@ -5,7 +5,7 @@
 ;; See the "Replicating Guix" section in the manual.
 
 (specifications->manifest
-  (list "emacs-next-nox"
+  (list "emacs-next"
         "emacs-ace-window"
         "emacs-anzu"
         "emacs-avy"

@@ -8,7 +8,8 @@ RUN find /src/guix-install.d/gpg_signing_keys -type f -exec gpg --import {} \; &
     sudo -H -u gitpod bash -c 'mkdir -p ~/.config/guix && \
     cp /src/guix-install.d/channels.scm ~/.config/guix/channels.scm && \
     guix pull && \
-    ~/.config/guix/current/bin/guix package -m /src/guix-install.d/manifest.scm'
+    ~/.config/guix/current/bin/guix package -m /src/guix-install.d/manifest.scm && \
+    guix gc'
 
 COPY ./ /src
 USER gitpod
