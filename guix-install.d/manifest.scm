@@ -57,6 +57,7 @@
         "emacs-vterm"
         "emacs-vundo"
         "emacs-yasnippet"
+        "emacs-yasnippet-snippets"
         "emacs-ztree"
         ;; libs
         "glibc-locales"
