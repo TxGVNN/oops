@@ -37,7 +37,9 @@
 (use-package gcmh
   :ensure t
   :init (gcmh-mode)
-  :config (add-to-list 'hidden-minor-modes 'gcmh-mode))
+  :config
+  (setq gcmh-idle-delay 'auto)
+  (add-to-list 'hidden-minor-modes 'gcmh-mode))
 
 ;;; COMPLETION SYSTEM: vertico, orderless, marginalia, consult, embark
 (use-package vertico
@@ -319,11 +321,14 @@
   (defun shell-with-histfile(buffer-name histfile)
     "Create a shell BUFFER-NAME and set comint-input-ring-file-name is HISTFILE."
     (let* ((shell-directory-name (locate-user-emacs-file "shell"))
-           (filepath (expand-file-name (format "%s/%s.history" shell-directory-name histfile))))
+           (comint-input-ring-file-name (expand-file-name
+                                         (format "%s/%s.history" shell-directory-name histfile)))
+           (comint-input-ring (make-ring 1)))
+      ;; HACK: make shell-mode doesnt set comint-input-ring-file-name
+      (ring-insert comint-input-ring "uname")
       (unless (file-exists-p shell-directory-name)
         (make-directory shell-directory-name t))
       (with-current-buffer (shell buffer-name)
-        (setq-local comint-input-ring-file-name filepath)
         (comint-read-input-ring t)
         (set-process-sentinel (get-buffer-process (current-buffer))
                               #'shell-write-history-on-exit))))
@@ -730,13 +735,13 @@
 (use-package eev
   :ensure t :defer 1
   :config (require 'eev-load)
-  (defun eepitch-this-line-or-setup ()
+  (defun eepitch-this-line-or-setup (&optional prefix)
     "Setup eepitch-buffer-name if PREFIX or eval this line."
-    (interactive)
-    (if (eq eepitch-buffer-name "")
-        (setq-local eepitch-buffer-name (read-buffer-to-switch "Buffer: ")))
-    (unless (get-buffer eepitch-buffer-name)
-      (shell eepitch-buffer-name))
+    (interactive "P")
+    (when (and prefix (eq eepitch-buffer-name ""))
+      (setq-local eepitch-buffer-name (read-buffer-to-switch "Buffer: "))
+      (unless (get-buffer eepitch-buffer-name)
+        (shell eepitch-buffer-name)))
     (eepitch-this-line))
   (global-set-key (kbd "<f8>") #'eepitch-this-line-or-setup))
 (use-package so-long
@@ -744,7 +749,8 @@
   :hook (after-init . global-so-long-mode))
 (use-package detached
   :ensure t
-  :init (detached-init)
+  :custom(detached-init-allow-list '(compile org))
+  :hook (after-init . detached-init)
   :bind (([remap async-shell-command] . detached-shell-command)
          ("C-x M" . detached-compile))
   :custom ((detached-terminal-data-command system-type)))
