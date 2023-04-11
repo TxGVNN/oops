@@ -43,3 +43,10 @@ TMATE_SESSION=$(tmate -S "${HOME}/.tmate.sock" display -p '#{tmate_ssh}')
 # send session to telegram
 message="${GITPOD_WORKSPACE_CONTEXT_URL}\n\n${GITPOD_WORKSPACE_URL}\n\n${TMATE_SESSION}"
 curl "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" --data "{\"chat_id\":\"$TELEGRAM_CHAT_ID\", \"text\":\"$message\"}" -H 'content-type: application/json'
+
+# Python - pyenv
+if [ ! -d "/workspace/.pyenv" ]; then
+    git clone https://github.com/pyenv/pyenv.git /workspace/.pyenv
+    git -C /workspace/.pyenv checkout ff93c58babd813066bf2d64d004a5cee33c0f27b
+fi
+ln -svf /workspace/.pyenv ~/.pyenv

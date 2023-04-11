@@ -98,6 +98,7 @@
         "direnv"
         "dropbear"
         "dtach"
+        "ghcli"
         "git-crypt"
         "global"
         "ripgrep"

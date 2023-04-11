@@ -15,9 +15,6 @@ COPY ./ /src
 USER gitpod
 WORKDIR /home/gitpod
 RUN sudo chown -R gitpod. /src && \
-    ln -sv /src/profile/.emacs.d $HOME/.emacs.d && \
-    . $HOME/.guix-profile/etc/profile && \
-    emacs -q --batch -l $HOME/.emacs.d/init.el -l $HOME/.emacs.d/setup.el && \
-    wget -O /tmp/gh.deb https://github.com/cli/cli/releases/download/v2.24.3/gh_2.24.3_linux_amd64.deb && \
-    sudo dpkg -i /tmp/gh.deb
+    mkdir -p /home/gitpod/.config/direnv && \
+    printf '%s\n%s' '[whitelist]' 'prefix = [ "/workspace" ]' > .config/direnv/config.toml
 ENV PATH=/workspace/.profile/bin:/src/profile/bin:$PATH

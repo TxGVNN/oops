@@ -473,4 +473,7 @@ export LOCATE_PATH=~/.locate.db
 export SSL_CERT_FILE=/etc/ssl/certs/ca-certificates.crt
 
 export PATH=/workspace/.profile/bin:/src/profile/bin:$PATH
+if [ -d "/var/run/user/$(id -u)" ]; then
+    export XDG_RUNTIME_DIR=/var/run/user/$(id -u)
+fi
 for i in $(ls -A $HOME/.bashrc.d/); do source $HOME/.bashrc.d/$i; done

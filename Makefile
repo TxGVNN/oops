@@ -1,4 +1,4 @@
-NAME	?= gitpod
+NAME	?= $(shell basename $(shell pwd))
 ORG	?=
 
 REPO	:= ${ORG}/${NAME}
