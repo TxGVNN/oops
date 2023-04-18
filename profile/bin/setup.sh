@@ -50,3 +50,9 @@ if [ ! -d "/workspace/.pyenv" ]; then
     git -C /workspace/.pyenv checkout ff93c58babd813066bf2d64d004a5cee33c0f27b
 fi
 ln -svf /workspace/.pyenv ~/.pyenv
+
+# Nodejs - nvm
+if [ ! -d "/workspace/.nvm" ]; then
+    curl -o- https://raw.githubusercontent.com/creationix/nvm/v0.33.8/install.sh | NVM_DIR=/workspace/.nvm bash
+fi
+ln -svf /workspace/.nvm ~/.nvm
