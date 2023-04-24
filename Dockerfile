@@ -16,5 +16,5 @@ USER gitpod
 WORKDIR /home/gitpod
 RUN sudo chown -R gitpod. /src && \
     mkdir -p /home/gitpod/.config/direnv && \
-    printf '%s\n%s' '[whitelist]' 'prefix = [ "/workspace" ]' > .config/direnv/config.toml
+    printf '%s\n%s' '[whitelist]' 'prefix = [ "/workspace" ]' > /home/gitpod/.config/direnv/config.toml
 ENV PATH=/workspace/.profile/bin:/src/profile/bin:$PATH
