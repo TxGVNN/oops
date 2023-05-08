@@ -17,10 +17,11 @@ _link(){
     ln -svf "$SRC" "$DST"
 }
 
-PROFILE="/workspace/.profile"
-if [ ! -d "$PROFILE" ]; then
-    cp /src/profile ${PROFILE} -a
+OOPS_DIR="/workspace/.oops"
+if [ ! -d "$OOPS_DIR" ]; then
+    cp /src/oops ${OOPS_DIR} -a
 fi
+PROFILE="/workspace/.oops/profile"
 
 _link "$PROFILE/.emacs.d" ~/.emacs.d
 _link "$PROFILE/.screenrc" ~/.screenrc
