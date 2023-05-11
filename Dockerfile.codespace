@@ -17,21 +17,22 @@ RUN groupadd --gid 1000 vscode && \
     echo 'vscode ALL=(root) NOPASSWD:ALL' > /etc/sudoers.d/vscode && \
     chmod 0440 /etc/sudoers.d/vscode
 
-COPY ./ /src/
-RUN find /src/guix-install.d/gpg_signing_keys -type f -exec gpg --import {} \; && \
-    bash /src/guix-install.d/guix-install.sh && \
+COPY ./ /src/oops
+RUN find /src/oops/guix-install.d/gpg_signing_keys -type f -exec gpg --import {} \; && \
+    bash /src/oops/guix-install.d/guix-install.sh && \
     start-stop-daemon --user root --pidfile /tmp/guix.sock --background --start --exec /var/guix/profiles/per-user/root/current-guix/bin/guix-daemon -- --build-users-group=guixbuild --disable-chroot -c 2 -M 2 && \
     sleep 1 && \
-    chown -R vscode. /src && \
+    chown -R vscode. /src/oops && \
     sudo -H -u vscode bash -c 'mkdir -p ~/.config/guix && \
-    cp /src/guix-install.d/channels.scm ~/.config/guix/channels.scm && \
+    cp /src/oops/guix-install.d/channels.scm ~/.config/guix/channels.scm && \
     guix pull && \
-    ~/.config/guix/current/bin/guix package -m /src/guix-install.d/manifest.scm && \
+    ~/.config/guix/current/bin/guix package -m /src/oops/guix-install.d/manifest.scm && \
     guix gc' && \
     mkdir -p /home/vscode/.config/direnv && \
-    printf '%s\n%s' '[whitelist]' 'prefix = [ "/workspace" ]' > /home/vscode/.config/direnv/config.toml
+    printf '%s\n%s' '[whitelist]' 'prefix = [ "/workspaces" ]' > /home/vscode/.config/direnv/config.toml
 
-ENV PATH=/workspace/.profile/bin:/src/profile/bin:$PATH
+ENV PATH=/workspaces/.profile/bin:/src/oops/profile/bin:$PATH
+ENV WORKSPACE=/workspaces
 
 COPY entrypoint.sh /entrypoint.sh
 ENTRYPOINT ["/entrypoint.sh"]

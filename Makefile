@@ -18,8 +18,12 @@ TAG_RELEASE := ${REPO}:${VERSION}
 
 all: build
 
-build:
-	docker build -t ${TAG_BUILD} --build-arg=VERSION=$(VERSION) .
+build/codespace:
+	docker build -t ${TAG_BUILD} --build-arg=VERSION=$(VERSION) -f Dockerfile.codespace .
+	docker tag ${TAG_BUILD} ${TAG_RELEASE}
+
+build/gitpod:
+	docker build -t ${TAG_BUILD} --build-arg=VERSION=$(VERSION) -f Dockerfile.gitpod .
 	docker tag ${TAG_BUILD} ${TAG_RELEASE}
 
 push:

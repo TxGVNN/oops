@@ -18,3 +18,4 @@ RUN sudo chown -R gitpod. /src/oops && \
     mkdir -p /home/gitpod/.config/direnv && \
     printf '%s\n%s' '[whitelist]' 'prefix = [ "/workspace" ]' > /home/gitpod/.config/direnv/config.toml
 ENV PATH=/workspace/.oops/profile/bin:/src/oops/profile/bin:$PATH
+ENV WORKSPACE=/workspace

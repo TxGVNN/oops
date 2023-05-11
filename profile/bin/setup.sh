@@ -17,11 +17,11 @@ _link(){
     ln -svf "$SRC" "$DST"
 }
 
-OOPS_DIR="/workspace/.oops"
+OOPS_DIR="${WORKSPACE}/.oops"
 if [ ! -d "$OOPS_DIR" ]; then
     cp /src/oops ${OOPS_DIR} -a
 fi
-PROFILE="/workspace/.oops/profile"
+PROFILE="${OOPS_DIR}/profile"
 
 _link "$PROFILE/.emacs.d" ~/.emacs.d
 _link "$PROFILE/.screenrc" ~/.screenrc
@@ -29,6 +29,7 @@ _link "$PROFILE/.bashrc" ~/.bashrc
 _link "$PROFILE/.bash_profile" ~/.bash_profile
 _link "$PROFILE/.bash_logout" ~/.bash_logout
 
+mkdir -p $HOME/.bashrc.d
 for i in $(ls -A "$PROFILE/.bashrc.d/"); do
     _link "$PROFILE/.bashrc.d/$i" $HOME/.bashrc.d/$i
 done
