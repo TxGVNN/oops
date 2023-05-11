@@ -1,0 +1,50 @@
+FROM docker.io/library/debian:bullseye-20230320-slim
+
+RUN apt-get update && \
+    DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+    ca-certificates curl dirmngr git gnupg less libc6 libssl1.1 libstdc++6 \
+    locales netbase sudo tar wget xz-utils procps \
+    openssh-server openssh-client lsof bash-completion && \
+    rm -rf /var/lib/apt/lists/* && \
+    mkdir -p /src
+RUN echo "en_US.UTF-8 UTF-8" >> /etc/locale.gen && locale-gen
+ENV LANG=en_US.UTF-8
+ENV LOCALE_ARCHIVE=/usr/lib/locale/locale-archive
+
+# Add non-root user.
+RUN groupadd --gid 1000 vscode && \
+    useradd --shell /bin/bash --uid 1000 --gid 1000 --create-home vscode && \
+    echo 'vscode ALL=(root) NOPASSWD:ALL' > /etc/sudoers.d/vscode && \
+    chmod 0440 /etc/sudoers.d/vscode
+
+COPY ./ /src/
+RUN find /src/guix-install.d/gpg_signing_keys -type f -exec gpg --import {} \; && \
+    bash /src/guix-install.d/guix-install.sh && \
+    start-stop-daemon --user root --pidfile /tmp/guix.sock --background --start --exec /var/guix/profiles/per-user/root/current-guix/bin/guix-daemon -- --build-users-group=guixbuild --disable-chroot -c 2 -M 2 && \
+    sleep 1 && \
+    chown -R vscode. /src && \
+    sudo -H -u vscode bash -c 'mkdir -p ~/.config/guix && \
+    cp /src/guix-install.d/channels.scm ~/.config/guix/channels.scm && \
+    guix pull && \
+    ~/.config/guix/current/bin/guix package -m /src/guix-install.d/manifest.scm && \
+    guix gc' && \
+    mkdir -p /home/vscode/.config/direnv && \
+    printf '%s\n%s' '[whitelist]' 'prefix = [ "/workspace" ]' > /home/vscode/.config/direnv/config.toml
+
+ENV PATH=/workspace/.profile/bin:/src/profile/bin:$PATH
+
+COPY entrypoint.sh /entrypoint.sh
+ENTRYPOINT ["/entrypoint.sh"]
+CMD ["sleep", "infinity"]
+
+# Set up tmpfs volumes.
+VOLUME ["/tmp", "/run"]
+
+ARG DEBIAN
+ARG REVISION
+LABEL org.opencontainers.image.source="https://github.com/TxGVNN/oops"
+LABEL org.opencontainers.image.documentation="https://github.com/TxGVNN/oops/blob/${REVISION}/README.md"
+LABEL devcontainer.metadata="{ \
+    \"remoteUser\": \"vscode\", \
+    \"overrideCommand\": false \
+    }"

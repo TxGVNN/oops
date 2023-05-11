@@ -1,0 +1,23 @@
+{
+  "name": "Guix Dev Container",
+  "image": "ghcr.io/txgvnn/oops/codespace:latest",
+
+  "extensions": [],
+
+  "settings": {
+    "terminal.integrated.shell.linux": "/bin/bash"
+  },
+
+  "forwardPorts": [],
+
+  "features": {
+    "ghcr.io/devcontainers/features/sshd:1": {
+      "version": "1.0.9"
+    },
+    "ghcr.io/devcontainers/features/docker-from-docker:1": {
+      "version": "latest"
+    }
+  },
+  "postCreateCommand": "setup.sh",
+  "remoteUser": "vscode"
+}
