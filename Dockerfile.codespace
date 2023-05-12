@@ -27,9 +27,7 @@ RUN find /src/oops/guix-install.d/gpg_signing_keys -type f -exec gpg --import {}
     cp /src/oops/guix-install.d/channels.scm ~/.config/guix/channels.scm && \
     guix pull && \
     ~/.config/guix/current/bin/guix package -m /src/oops/guix-install.d/manifest.scm && \
-    guix gc' && \
-    mkdir -p /home/vscode/.config/direnv && \
-    printf '%s\n%s' '[whitelist]' 'prefix = [ "/workspaces" ]' > /home/vscode/.config/direnv/config.toml
+    guix gc'
 
 ENV PATH=/workspaces/.profile/bin:/src/oops/profile/bin:$PATH
 ENV WORKSPACE=/workspaces
@@ -41,7 +39,6 @@ CMD ["sleep", "infinity"]
 # Set up tmpfs volumes.
 VOLUME ["/tmp", "/run"]
 
-ARG DEBIAN
 ARG REVISION
 LABEL org.opencontainers.image.source="https://github.com/TxGVNN/oops"
 LABEL org.opencontainers.image.documentation="https://github.com/TxGVNN/oops/blob/${REVISION}/README.md"

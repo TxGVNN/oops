@@ -46,15 +46,19 @@ TMATE_SESSION=$(tmate -S "${HOME}/.tmate.sock" display -p '#{tmate_ssh}')
 message="${GITPOD_WORKSPACE_CONTEXT_URL}\n\n${GITPOD_WORKSPACE_URL}\n\n${TMATE_SESSION}"
 curl "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" --data "{\"chat_id\":\"$TELEGRAM_CHAT_ID\", \"text\":\"$message\"}" -H 'content-type: application/json'
 
+# Direnv
+mkdir -p ~/.config/direnv
+printf '%s\n%s' '[whitelist]' 'prefix = [ "'$WORKSPACE'" ]' > ~/.config/direnv/config.toml
+
 # Python - pyenv
-if [ ! -d "/workspace/.pyenv" ]; then
-    git clone https://github.com/pyenv/pyenv.git /workspace/.pyenv
-    git -C /workspace/.pyenv checkout ff93c58babd813066bf2d64d004a5cee33c0f27b
+if [ ! -d "${WORKSPACE}/.pyenv" ]; then
+    git clone https://github.com/pyenv/pyenv.git "${WORKSPACE}/.pyenv"
+    git -C "${WORKSPACE}/.pyenv" checkout ff93c58babd813066bf2d64d004a5cee33c0f27b
 fi
-ln -svf /workspace/.pyenv ~/.pyenv
+ln -svf "${WORKSPACE}/.pyenv" ~/.pyenv
 
 # Nodejs - nvm
-if [ ! -d "/workspace/.nvm" ]; then
-    curl -o- https://raw.githubusercontent.com/creationix/nvm/v0.33.8/install.sh | NVM_DIR=/workspace/.nvm bash
+if [ ! -d "${WORKSPACE}/.nvm" ]; then
+    curl -o- https://raw.githubusercontent.com/creationix/nvm/v0.33.8/install.sh | NVM_DIR="${WORKSPACE}/.nvm" bash
 fi
-ln -svf /workspace/.nvm ~/.nvm
+ln -svf "${WORKSPACE}/.nvm" ~/.nvm
