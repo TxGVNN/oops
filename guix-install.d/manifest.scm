@@ -107,6 +107,7 @@
         "dtach"
         "ghcli"
         "global"
+        "iproute2"
         "ripgrep"
         "rsync"
         "screen"
