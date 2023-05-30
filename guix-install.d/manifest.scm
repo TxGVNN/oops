@@ -45,7 +45,6 @@
         "emacs-org-alert"
         "emacs-org-bullets"
         "emacs-perspective@2.16.20230114"
-        "emacs-php-mode"
         "emacs-pinentry"
         "emacs-project"
         "emacs-project-tasks"
