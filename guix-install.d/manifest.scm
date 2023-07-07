@@ -44,6 +44,7 @@
         "emacs-orderless"
         "emacs-org-alert"
         "emacs-org-bullets"
+        "emacs-pcmpl-args"
         "emacs-perspective@2.16.20230114"
         "emacs-pinentry"
         "emacs-project"
