@@ -1,0 +1,53 @@
+name: Build pack
+on:
+  # Triggers the workflow on push or pull request events but only for the master branch
+  push:
+    branches: [ main ]
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-20.04
+    steps:
+    - uses: actions/checkout@v3
+      with:
+        fetch-depth: 2
+        submodules: true
+    - name: Guix cache
+      if: ${{ ! steps.guix_pack_cache.outputs.cache-hit }}
+      uses: actions/cache@v3
+      with:
+        path: |
+          ~/.cache/guix
+        key: guix-cache
+        restore-keys: |
+          guix-cache
+    - name: Install Guix
+      id: install-guix
+      uses: TxGVNN/guix-install-action@v1
+      with:
+        channels: |-
+            (list (channel
+                   (name 'guix)
+                   (url "https://git.savannah.gnu.org/git/guix.git"))
+                  (channel
+                   (name 'guxti)
+                   (url "https://github.com/TxGVNN/guxti")))
+    - name: Install packages
+      shell: bash
+      run: |
+        guix pack -f deb -m guix-install.d/pack.scm
+        guix pack -f tarball -m guix-install.d/pack.scm
+    - name: Publish packages
+      run: |
+        mkdir packages && cd packages
+        cp $(ls /gnu/store/*.deb | head -n1) pack.deb
+        cp $(ls /gnu/store/*.tar.gz | head -n1) pack.tar.gz
+        git init --initial-branch=packages
+        cp ../.git/config .git/
+        git config user.name github-actions
+        git config user.email github-actions@github.com
+        git add .
+        git commit -m "Build packages"
+        git push --force origin packages
