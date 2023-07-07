@@ -18,7 +18,7 @@
 (add-hook 'emacs-startup-hook
           (lambda ()
             (setq file-name-handler-alist doom--file-name-handler-alist)))
-(defvar emacs-config-version "latest")
+(defvar emacs-config-version "20230707.0445")
 (defvar hidden-minor-modes '(whitespace-mode))
 
 (require 'package)
@@ -262,7 +262,7 @@
   (define-key isearch-mb-minibuffer-map (kbd "M-s %") 'isearch-query-replace-regexp))
 (use-package rg :ensure t :defer t)
 (use-package engine-mode
-  :ensure t :defer 1
+  :ensure t :defer t
   :config
   (setq engine/browser-function 'eww-browse-url)
   (defengine vagrant-box
@@ -294,17 +294,27 @@
            (dirs (list default-directory)))
       (project-find-file-in (thing-at-point 'filename) dirs pr include-all)))
   (setq project-compilation-buffer-name-function 'project-prefixed-buffer-name)
+  (defun shell--save-history (&rest _)
+    "Save `shell' history."
+    (unless (string-prefix-p detached--shell-command-buffer (buffer-name))
+      (let* ((inhibit-message t))
+        (comint-write-input-ring))))
+  (advice-add #'comint-add-to-input-history :after #'shell--save-history)
   (defun shell-with-histfile(buffer-name histfile)
     "Create a shell BUFFER-NAME and set comint-input-ring-file-name is HISTFILE."
     (let* ((shell-directory-name (locate-user-emacs-file "shell"))
-           (comint-input-ring-file-name (expand-file-name
-                                         (format "%s/%s.history" shell-directory-name histfile)))
-           (comint-input-ring (make-ring 1)))
+           (comint-history-file (expand-file-name
+                                 (format "%s/%s.history" shell-directory-name histfile)))
+           (comint-input-ring-file-name comint-history-file)
+           (comint-input-ring (make-ring 1))
+           (buff (get-buffer-create buffer-name)))
       ;; HACK: make shell-mode doesnt set comint-input-ring-file-name
       (ring-insert comint-input-ring "uname")
       (unless (file-exists-p shell-directory-name)
         (make-directory shell-directory-name t))
-      (with-current-buffer (shell buffer-name)
+      (with-current-buffer (shell buff)
+        (set-buffer buff)
+        (setq-local comint-input-ring-file-name comint-history-file)
         (comint-read-input-ring t)
         (set-process-sentinel (get-buffer-process (current-buffer))
                               #'shell-write-history-on-exit))))
@@ -390,6 +400,12 @@
 (use-package envrc ;; direnv > 2.7
   :ensure t :defer t
   :config
+  (defun my/ensure-current-project (fn &rest args) ;; purcell/envrc#59
+    (let ((default-directory (project-root (project-current t))))
+      (with-temp-buffer
+        (envrc-mode 1)
+        (apply fn args))))
+  (advice-add 'project-compile :around #'my/ensure-current-project)
   (setq envrc-none-lighter nil
         envrc-on-lighter '(:propertize " env" face envrc-mode-line-on-face)
         envrc-error-lighter '(:propertize " env" face envrc-mode-line-error-face))
@@ -463,7 +479,7 @@
       (or (gethash persp persp-compile-history)
           (puthash persp (make-ring 16) persp-compile-history)))
     (advice-add #'compilation-read-command :override #'compilation-read-command-persp)
-    (defun compilation-read-command-persp (command)
+    (defun compilation-read-command-persp (command &optional prompt)
       "Override compilation-read-command (COMMAND)."
       (let* ((persp-name (if (bound-and-true-p persp-mode)
                              (persp-name (persp-curr)) "0"))
@@ -471,11 +487,27 @@
               (ring-elements (persp--get-command-history persp-name)))
              (command (or (car history) command))
              (input (read-shell-command
-                     (format "Compile `%s' [%s]: "
+                     (format "%s `%s' [%s]: " (or prompt "Compile")
                              (pretty--abbreviate-directory default-directory) command) nil
                      'history command)))
         (ring-remove+insert+extend (persp--get-command-history persp-name)
-                                   (if (string-empty-p input) command input)))))
+                                   (if (string-empty-p input) command input))))
+    (defun detached-compile-custom (command &optional comint)
+      "Override detached-compile(COMMAND COMINT) to use `compilation-read-command-persp'."
+      (interactive
+       (list
+        (let ((command (eval compile-command t)))
+          (if (or compilation-read-command current-prefix-arg)
+              (compilation-read-command-persp command "Detached compile")
+            command))
+        (consp current-prefix-arg)))
+      (let* ((detached-enabled t)
+             (detached-session-origin (or detached-session-origin 'compile))
+             (detached-session-action (or detached-session-action
+                                          detached-compile-session-action))
+             (detached-session-mode (or detached-session-mode 'attached)))
+        (compile command comint)))
+    (advice-add #'detached-compile :override #'detached-compile-custom))
   (with-eval-after-load 'savehist
     (add-to-list 'savehist-additional-variables 'persp-compile-history)))
 ;; project-temp-root
@@ -526,10 +558,13 @@
   :config (add-to-list 'hidden-minor-modes 'beacon-mode))
 
 
-;;; COMPLETION CODE: corfu, yasnippet, eglot, dumb-jump
+;;; COMPLETION CODE: corfu, yasnippet, eglot, dumb-jump, pcmpl-args
 (use-package corfu
   :ensure t :defer t
   :init (global-corfu-mode)
+  :hook ((shell-mode . corfu-echo-mode)
+         (eshell-mode . corfu-echo-mode)
+         (comint-mode . corfu-echo-mode))
   :bind
   (:map corfu-map
         ("M-m" . corfu-move-to-minibuffer)
@@ -542,6 +577,7 @@
     (use-package corfu-terminal
       :ensure t :defer t
       :init (add-hook 'corfu-mode-hook #'corfu-terminal-mode)))
+  (setq corfu-exclude-modes '(shell-mode eshell-mode comint-mode))
   (setq completion-cycle-threshold 3
         corfu-auto t
         corfu-cycle t
@@ -630,6 +666,7 @@
   :commands eglot-ensure
   :config (setq eglot-report-progress nil)
   :after (project flymake))
+(use-package pcmpl-args :ensure t :defer 1)
 
 ;;; TOOLS: avy, crux, expand-region, move-text, ace-window, vundo|undo-tree,
 (use-package avy
@@ -642,6 +679,8 @@
   ("M-g l" . avy-goto-line))
 (use-package crux
   :ensure t :defer t :pin me
+  :config
+  (setq crux-share-to-transfersh-host "https://free.keep.sh")
   :bind
   ("C-^" . crux-top-join-line)
   ("C-a" . crux-move-beginning-of-line)
@@ -721,14 +760,19 @@
 (use-package eev
   :ensure t :defer 1
   :config (require 'eev-load)
+  (defun eepitch-get-buffer-name-line()
+    (if (not (eq eepitch-buffer-name ""))
+        (format "ξ:%s "eepitch-buffer-name) ""))
+  (add-to-list 'mode-line-misc-info '(:eval (propertize (eepitch-get-buffer-name-line)
+                                                        'face 'custom-set)))
   (defun eepitch-this-line-or-setup (&optional prefix)
     "Setup eepitch-buffer-name if PREFIX or eval this line."
     (interactive "P")
-    (when (and prefix (eq eepitch-buffer-name ""))
+    (if (not prefix)
+        (eepitch-this-line)
       (setq-local eepitch-buffer-name (read-buffer-to-switch "Buffer: "))
       (unless (get-buffer eepitch-buffer-name)
-        (shell eepitch-buffer-name)))
-    (eepitch-this-line))
+        (shell eepitch-buffer-name))))
   (global-set-key (kbd "<f8>") #'eepitch-this-line-or-setup))
 (use-package so-long
   :ensure t :defer t
@@ -748,6 +792,8 @@
            (or project-compilation-buffer-name-function
                compilation-buffer-name-function)))
       (call-interactively #'detached-compile)))
+  (with-eval-after-load 'detached-list-sessions
+    (define-key detached-list-mode-map (kbd "A") #'detached-attach-session))
   :hook (after-init . detached-init)
   :bind
   (([remap async-shell-command] . detached-shell-command)
@@ -919,7 +965,10 @@
   :after imenu
   :config
   (setq-default header-line-format
-                (list '("::" (:eval (propertize (or (which-function) "") 'face 'font-lock-function-name-face))))))
+                (list "▶" '((:eval (propertize (pretty--abbreviate-directory default-directory)
+                                               'face 'font-lock-comment-face)) "::"
+                                               (:eval (propertize (or (which-function) "")
+                                                                  'face 'font-lock-function-name-face))))))
 
 ;;; CUSTOMIZE
 (defun pretty--abbreviate-directory (dir)
@@ -981,18 +1030,18 @@
    (concat (file-name-as-directory temporary-file-directory)
            (make-temp-name
             (format "%s_%s_" user-login-name
-                    (format-time-string "%Y%m%d-%H%M"))))))
+                    (format-time-string "%Y%m%d-%H%M%S"))))))
 (defun insert-datetime(&optional prefix)
   "Insert YYYYmmdd-HHMM or YYYY-mm-dd_HH-MM if PREFIX set."
   (interactive "p")
   (let ((msg
          (cond
           ((= prefix 1)
-           (format-time-string "%Y%m%d-%H%M" (current-time) t))
+           (format-time-string "%Y%m%d-%H%M%S" (current-time) t))
           ((= prefix 2)
            (string-trim (shell-command-to-string "date --utc")))
           ((= prefix 4)
-           (format-time-string "%Y-%m-%d_%H-%M" (current-time) t)))))
+           (format-time-string "%Y-%m-%d_%H-%M-%S" (current-time) t)))))
     (insert msg)))
 
 (defun linux-stat-file()
@@ -1140,6 +1189,7 @@
  '(use-dialog-box nil)
  '(vc-follow-symlinks nil)
  '(version-control t)
+ '(warning-suppress-log-types '((comp)))
  '(whitespace-style
    '(face tabs trailing space-before-tab newline empty tab-mark))
  '(x-select-request-type '(COMPOUND_TEXT UTF8_STRING STRING TEXT)))
@@ -1254,7 +1304,7 @@
   :config (add-hook 'compilation-finish-functions #'ob-compile-save-file))
 
 (use-package yaml-mode
-  :ensure t
+  :ensure t :defer t
   :init (add-hook 'yaml-mode-hook #'eglot-ensure))
 
 (use-package markdown-mode
@@ -1312,18 +1362,14 @@
                       (substring (md5 (format "%s%s" (emacs-pid) (current-time))) 0 4)
                       var var var)))))
 
-;; PHP
-(use-package php-mode
-  :ensure t)
-
 ;; Erlang
 (use-package erlang
   :ensure t
   :hook (erlang-mode . eglot-ensure))
 
 ;; Terraform
-(use-package terraform-mode :ensure t)
-(use-package terraform-doc :ensure t)
+(use-package terraform-mode :ensure t :defer t)
+(use-package terraform-doc :ensure t :defer t)
 
 ;; Ansible
 (use-package ansible
@@ -1341,7 +1387,7 @@
   :hook (java-mode . eglot-ensure))
 
 (use-package lua-mode
-  :ensure t)
+  :ensure t :defer t)
 ;; HTML
 (use-package indent-guide
   :ensure t :defer t
@@ -1386,15 +1432,11 @@ npm i -g typescript-language-server; npm i -g typescript"
 ;; Docker
 (use-package docker :defer t
   :config (setq docker-run-async-with-buffer-function #'docker-run-async-with-buffer-shell))
-(use-package dockerfile-mode :ensure t)
-(use-package docker-compose-mode :ensure t)
+(use-package dockerfile-mode :ensure t :defer t)
+(use-package docker-compose-mode :ensure t :defer t)
 
-(use-package restclient-jq
-  :ensure t
-  :defer t)
-(use-package restclient
-  :ensure t
-  :defer t
+(use-package restclient-jq :ensure t :defer t)
+(use-package restclient :ensure t :defer t
   :config (require 'restclient-jq))
 (defun develop-kubernetes()
   "Kubernetes tools."
