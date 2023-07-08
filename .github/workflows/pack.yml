@@ -39,15 +39,18 @@ jobs:
       run: |
         guix pack -f deb -m guix-install.d/pack.scm
         guix pack -f tarball -m guix-install.d/pack.scm
-    - name: Publish packages
+
+    - name: Get packages
       run: |
         mkdir packages && cd packages
-        cp $(ls /gnu/store/*.deb | head -n1) pack.deb
         cp $(ls /gnu/store/*.tar.gz | head -n1) pack.tar.gz
-        git init --initial-branch=packages
-        cp ../.git/config .git/
-        git config user.name github-actions
-        git config user.email github-actions@github.com
-        git add .
-        git commit -m "Build packages"
-        git push --force origin packages
+
+    - name: Setup Pages
+      uses: actions/configure-pages@v3
+    - name: Upload Artifact
+      uses: actions/upload-pages-artifact@v3
+      with:
+        path: 'packages'
+    - name: Deploy to GitHub Pages
+      id: deployment
+      uses: actions/deploy-pages@v2
