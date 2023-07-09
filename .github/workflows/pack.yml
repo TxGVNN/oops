@@ -42,7 +42,6 @@ jobs:
     - name: Install packages
       shell: bash
       run: |
-        guix pack -f deb -m guix-install.d/pack.scm
         guix pack -f tarball -m guix-install.d/pack.scm
 
     - name: Get packages
