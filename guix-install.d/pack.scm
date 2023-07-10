@@ -65,7 +65,6 @@
         "emacs-yasnippet-snippets"
         "emacs-ztree"
         ;; libs
-        "glibc-locales"
         "tree-sitter"
         "tree-sitter-bash"
         "tree-sitter-c"

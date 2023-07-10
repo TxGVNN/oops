@@ -47,7 +47,7 @@ jobs:
     - name: Get packages
       run: |
         mkdir packages && cd packages
-        cp $(ls /gnu/store/*.tar.gz | head -n1) pack.tar.gz
+        cp $(ls /gnu/store/*.tar.gz | head -n1) guix.tar.gz
 
     - name: Setup Pages
       uses: actions/configure-pages@v3
