@@ -39,15 +39,11 @@ jobs:
                   (channel
                    (name 'guxti)
                    (url "https://github.com/TxGVNN/guxti")))
-    - name: Install packages
+    - name: Get and build packages
       shell: bash
       run: |
-        guix pack -f tarball -m guix-install.d/pack.scm
-
-    - name: Get packages
-      run: |
-        mkdir packages && cd packages
-        cp $(ls /gnu/store/*.tar.gz | head -n1) guix.tar.gz
+        mkdir packages
+        guix pack -f tarball --root=packages/guix.tar.gz -m guix-install.d/pack.scm
 
     - name: Setup Pages
       uses: actions/configure-pages@v3
