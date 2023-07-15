@@ -18,7 +18,7 @@
 (add-hook 'emacs-startup-hook
           (lambda ()
             (setq file-name-handler-alist doom--file-name-handler-alist)))
-(defvar emacs-config-version "20230707.0445")
+(defvar emacs-config-version "20230715.1151")
 (defvar hidden-minor-modes '(whitespace-mode))
 
 (require 'package)
@@ -561,6 +561,14 @@
 ;;; COMPLETION CODE: corfu, yasnippet, eglot, dumb-jump, pcmpl-args
 (use-package corfu
   :ensure t :defer t
+  :custom
+  (completion-cycle-threshold 3)
+  (corfu-auto t)
+  (corfu-cycle t)
+  (corfu-auto-prefix 2)
+  (corfu-preselect-first nil)
+  (corfu-history-mode t)
+  (corfu-exclude-modes '(shell-mode eshell-mode comint-mode))
   :init (global-corfu-mode)
   :hook ((shell-mode . corfu-echo-mode)
          (eshell-mode . corfu-echo-mode)
@@ -577,13 +585,6 @@
     (use-package corfu-terminal
       :ensure t :defer t
       :init (add-hook 'corfu-mode-hook #'corfu-terminal-mode)))
-  (setq corfu-exclude-modes '(shell-mode eshell-mode comint-mode))
-  (setq completion-cycle-threshold 3
-        corfu-auto t
-        corfu-cycle t
-        corfu-auto-prefix 2
-        corfu-preselect-first nil
-        corfu-history-mode t)
   (defvar-local corfu-common-old nil)
   (defun corfu-complete-common-or-next ()
     "Complete common prefix or go to next candidate (@minad/corfu#170)."
@@ -763,8 +764,16 @@
   (defun eepitch-get-buffer-name-line()
     (if (not (eq eepitch-buffer-name ""))
         (format "ξ:%s "eepitch-buffer-name) ""))
-  (add-to-list 'mode-line-misc-info '(:eval (propertize (eepitch-get-buffer-name-line)
-                                                        'face 'custom-set)))
+  (add-to-list 'mode-line-misc-info
+               '(:eval (propertize (eepitch-get-buffer-name-line) 'face 'custom-set)))
+  (defun eepitch-set-local-buffer-name(&rest _)
+    "Set `eepitch-buffer-name' to local buffer name."
+    (setq eepitch-code '(error "eepitch not set up"))
+    (setq-local eepitch-buffer-name-tmp eepitch-buffer-name)
+    (setq eepitch-buffer-name "")
+    (setq-local eepitch-buffer-name eepitch-buffer-name-tmp))
+  (advice-add #'eepitch :after #'eepitch-set-local-buffer-name)
+  (advice-add #'eepitch-this-line :after #'eepitch-set-local-buffer-name)
   (defun eepitch-this-line-or-setup (&optional prefix)
     "Setup eepitch-buffer-name if PREFIX or eval this line."
     (interactive "P")
@@ -792,8 +801,6 @@
            (or project-compilation-buffer-name-function
                compilation-buffer-name-function)))
       (call-interactively #'detached-compile)))
-  (with-eval-after-load 'detached-list-sessions
-    (define-key detached-list-mode-map (kbd "A") #'detached-attach-session))
   :hook (after-init . detached-init)
   :bind
   (([remap async-shell-command] . detached-shell-command)
@@ -801,6 +808,7 @@
    :map project-prefix-map
    ("C" . project-detached-compile)))
 (use-package dpaste :ensure t :defer t)
+(use-package gist :ensure t :defer t)
 
 ;;; CHECKER: flymake(C-h .)
 (use-package flymake
