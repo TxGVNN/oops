@@ -41,6 +41,7 @@
         "emacs-marginalia"
         "emacs-move-text"
         "emacs-multiple-cursors"
+        "emacs-ob-compile"
         "emacs-orderless"
         "emacs-org-alert"
         "emacs-org-bullets"

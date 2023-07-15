@@ -14,7 +14,7 @@ env:
   # Use docker.io for Docker Hub if empty
   REGISTRY: ghcr.io
   # github.repository as <account>/<repo>
-  IMAGE_NAME: ${{ github.repository }}
+  IMAGE_NAME: txgvnn/oops
 
 
 jobs:
@@ -47,12 +47,22 @@ jobs:
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
 
-      # Build and push Docker image with Buildx (don't push on PR)
-      # https://github.com/docker/build-push-action
-      - name: Build and push Docker image
+      - name: Build and push Gitpod.io imaGe
         uses: docker/build-push-action@ad44023a93711e3deb337508980b4b5e9bcdc5dc
         with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
           context: .
+          file: ./Dockerfile.gitpod
           push: ${{ github.event_name != 'pull_request' }}
-          tags: ${{ steps.meta.outputs.tags }}
+          tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/gitpod:${{ steps.meta.outputs.version }}
+          labels: ${{ steps.meta.outputs.labels }}
+
+      - name: Build and push Codespace image
+        uses: docker/build-push-action@ad44023a93711e3deb337508980b4b5e9bcdc5dc
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          context: .
+          file: ./Dockerfile.codespace
+          push: ${{ github.event_name != 'pull_request' }}
+          tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/codespace:${{ steps.meta.outputs.version }}
           labels: ${{ steps.meta.outputs.labels }}
