@@ -1,4 +1,4 @@
-image: ghcr.io/txgvnn/gitpod:latest
+image: ghcr.io/txgvnn/oops/gitpod:latest
 tasks:
   - command: |
       setup.sh
