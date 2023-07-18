@@ -92,7 +92,4 @@
         "dtach"
         "ripgrep"
         "rsync"
-        "screen"
-        "socat"
-        "tmate"
-        "zip"))
+        "socat"))
