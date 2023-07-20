@@ -102,6 +102,7 @@
         "ghcli"
         "global"
         "iproute2"
+        "jq"
         "ripgrep"
         "rsync"
         "screen"

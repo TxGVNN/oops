@@ -90,6 +90,7 @@
         ;; tools
         "direnv"
         "dtach"
+        "jq"
         "ripgrep"
         "rsync"
         "socat"))
