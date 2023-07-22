@@ -18,7 +18,7 @@
 (add-hook 'emacs-startup-hook
           (lambda ()
             (setq file-name-handler-alist doom--file-name-handler-alist)))
-(defvar emacs-config-version "20230715.1151")
+(defvar emacs-config-version "20230721.1630")
 (defvar hidden-minor-modes '(whitespace-mode))
 
 (require 'package)
@@ -79,7 +79,7 @@
                                    (minibuffer (initials)))))
 
 (use-package consult
-  :ensure t :defer t :pin me
+  :ensure t :defer t
   :bind
   ("M-y" . consult-yank-pop)
   ("M-g g" . consult-goto-line)
@@ -234,7 +234,9 @@
   :config  ;; j-T in magit-status buffer
   (setq magit-todos-branch-list nil
         magit-todos-update nil)
-  :hook (magit-mode . magit-todos-mode))
+  :init
+  (with-eval-after-load 'magit
+    (magit-todos-mode)))
 
 ;;; SEARCHING: ripgrep, anzu, engine-mode
 (use-package isearch :defer t
@@ -265,10 +267,10 @@
   :ensure t :defer t
   :config
   (setq engine/browser-function 'eww-browse-url)
+  (defengine nixhub "https://www.nixhub.io/search?q=%s")
+  (defengine debian-package "https://packages.debian.org/search?searchon=names&keywords=%s")
   (defengine vagrant-box
     "https://app.vagrantup.com/boxes/search?provider=libvirt&q=%s&utf8=%%E2%%9C%%93")
-  (defengine debian-package
-    "https://packages.debian.org/search?searchon=names&keywords=%s")
   (defengine alpine-apk-file
     "https://pkgs.alpinelinux.org/contents?file=%s&path=&name=&branch=edge&arch=x86_64")
   (defengine ubuntu-package
@@ -276,7 +278,7 @@
 
 ;;; WORKSPACE: project, perspective, envrc
 (use-package project :defer t
-  :ensure t :pin me
+  :ensure t
   :bind
   (:map project-prefix-map
         ("t" . project-term)
@@ -296,9 +298,8 @@
   (setq project-compilation-buffer-name-function 'project-prefixed-buffer-name)
   (defun shell--save-history (&rest _)
     "Save `shell' history."
-    (unless (string-prefix-p detached--shell-command-buffer (buffer-name))
-      (let* ((inhibit-message t))
-        (comint-write-input-ring))))
+    (let ((inhibit-message t))
+      (comint-write-input-ring)))
   (advice-add #'comint-add-to-input-history :after #'shell--save-history)
   (defun shell-with-histfile(buffer-name histfile)
     "Create a shell BUFFER-NAME and set comint-input-ring-file-name is HISTFILE."
@@ -411,7 +412,7 @@
         envrc-error-lighter '(:propertize " env" face envrc-mode-line-error-face))
   :hook (after-init . envrc-global-mode))
 (use-package perspective
-  :ensure t :pin me
+  :ensure t
   :init
   (setq persp-mode-prefix-key (kbd "C-z")
         persp-initial-frame-name "0")
@@ -545,7 +546,7 @@
   :hook (after-init . volatile-highlights-mode)
   :config (add-to-list 'hidden-minor-modes 'volatile-highlights-mode))
 (use-package symbol-overlay
-  :ensure t :defer t :pin nongnu
+  :ensure t :defer t
   :bind ("M-s H" . symbol-overlay-put)
   :hook (prog-mode . symbol-overlay-mode)
   :config (add-to-list 'hidden-minor-modes 'symbol-overlay-mode))
@@ -635,14 +636,14 @@
   (add-to-list 'completion-at-point-functions #'cape-dabbrev)
   (add-to-list 'completion-at-point-functions #'cape-file))
 (use-package yasnippet
-  :ensure t :defer t :pin me
+  :ensure t :defer t
   :hook (after-init . yas-global-mode)
   :config
   (setq yas-lighter " υ")
   (define-key yas-minor-mode-map [(tab)] nil)
   (define-key yas-minor-mode-map (kbd "TAB") nil))
 (use-package yasnippet-snippets
-  :ensure t :defer t :pin me)
+  :ensure t :defer t )
 (use-package consult-yasnippet
   :ensure t :defer t
   :init (global-set-key (kbd "M-]") #'completion-customize)
@@ -679,7 +680,7 @@
   ("M-g a" . avy-goto-char)
   ("M-g l" . avy-goto-line))
 (use-package crux
-  :ensure t :defer t :pin me
+  :ensure t :defer t
   :config
   (setq crux-share-to-transfersh-host "https://free.keep.sh")
   :bind
@@ -765,14 +766,20 @@
     (if (not (eq eepitch-buffer-name ""))
         (format "ξ:%s "eepitch-buffer-name) ""))
   (add-to-list 'mode-line-misc-info
-               '(:eval (propertize (eepitch-get-buffer-name-line) 'face 'custom-set)))
+               '(:eval (propertize (eepitch-get-buffer-name-line) 'face 'warning)))
   (defun eepitch-set-local-buffer-name(&rest _)
     "Set `eepitch-buffer-name' to local buffer name."
-    (setq eepitch-code '(error "eepitch not set up"))
+    (setq-local eepitch-code-tmp eepitch-code)
+    (setq-default eepitch-code '(error "eepitch not set up"))
+    (setq-local eepitch-code eepitch-code-tmp)
     (setq-local eepitch-buffer-name-tmp eepitch-buffer-name)
-    (setq eepitch-buffer-name "")
+    (setq-default eepitch-buffer-name "")
     (setq-local eepitch-buffer-name eepitch-buffer-name-tmp))
+  (defun eepitch-set-local-buffer-name-follow(&rest _)
+    "Set `eepitch-buffer-name' to local buffer name."
+    (setq-local eepitch-buffer-name (default-value 'eepitch-buffer-name)))
   (advice-add #'eepitch :after #'eepitch-set-local-buffer-name)
+  (advice-add #'eepitch-buffer-create :after #'eepitch-set-local-buffer-name-follow)
   (advice-add #'eepitch-this-line :after #'eepitch-set-local-buffer-name)
   (defun eepitch-this-line-or-setup (&optional prefix)
     "Setup eepitch-buffer-name if PREFIX or eval this line."
@@ -826,10 +833,9 @@
   (defun dired-auto-update-name (&optional suffix)
     "Auto update name with SUFFIX.ext."
     (interactive "p")
-    (let* ((filename (file-name-nondirectory (dired-get-file-for-visit)))
-           (suffix (replace-regexp-in-string
-                    "\n" "" (shell-command-to-string (format "stat %s|grep Change|awk '{print $2\"_\"$3}'" filename)))))
-      (rename-file filename (file-name-with-extension filename (format "%s.%s" suffix (file-name-extension filename))) t)
+    (let ((filename (file-name-nondirectory (dired-get-file-for-visit)))
+          (timestamp (format-time-string "%Y%m%d-%H%M%S")))
+      (rename-file filename (concat filename "_" timestamp) t)
       (revert-buffer)))
   (setq dired-listing-switches "-alh"))
 (use-package diredfl
@@ -1015,8 +1021,10 @@
 (defun yank-file-path ()
   "Yank file path of buffer."
   (interactive)
-  (let ((filename (if (buffer-file-name) (buffer-file-name)
-                    default-directory)))
+  (let ((filename (or (when (eq major-mode 'dired-mode)
+                        (dired-get-filename nil t))
+                      (if (buffer-file-name) (buffer-file-name)
+                        default-directory))))
     (when filename (kill-new filename)
           (message "Yanked %s (%s)" filename (what-line)))))
 (defun split-window-vertically-last-buffer (prefix)
@@ -1254,6 +1262,14 @@
   (dolist (package packages) (package-install package)))
 
 ;; .emacs
+(use-package elisp-mode
+  :ensure nil :defer t
+  :config
+  ;; Prevent byte complation of .emacs file, which can introduce bugs.
+  ;; BUG: Emacs try to install packages that are already installed.
+  (defun elisp-flymake-byte-compile-do-nothing())
+  (advice-add 'elisp-flymake-byte-compile :override #'elisp-flymake-byte-compile-do-nothing))
+
 (defun develop-dot()
   "Diff 'user-init-file - .emacs."
   (interactive)
@@ -1357,8 +1373,9 @@
                                   (if (not word) "" (format " (default %s)" word))))))
              (if (string= input "")
                  (if (not word) (error "No pydoc args given") word) input))))
+    (ignore-errors (kill-buffer "*PYDOCS*"))
     (shell-command (concat "python -c \"from pydoc import help;help(\'" w "\')\"") "*PYDOCS*")
-    (view-buffer-other-window "*PYDOCS*" t 'kill-buffer-and-window))
+    (view-buffer-other-window "*PYDOCS*" t 'kill-buffer))
   (defun python-print-debug-at-point()
     "Print debug."
     (interactive)
