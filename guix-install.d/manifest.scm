@@ -36,6 +36,7 @@
         "emacs-guix"
         "emacs-helpful"
         "emacs-hl-todo"
+        "emacs-isearch-mb"
         "emacs-magit"
         "emacs-magit-todos"
         "emacs-marginalia"
