@@ -32,6 +32,7 @@
         "emacs-gcmh"
         "emacs-geiser"
         "emacs-geiser-guile"
+        "emacs-gist"
         "emacs-git-gutter"
         "emacs-guix"
         "emacs-helpful"
