@@ -29,7 +29,7 @@ RUN find /src/oops/guix-install.d/gpg_signing_keys -type f -exec gpg --import {}
     ~/.config/guix/current/bin/guix package -m /src/oops/guix-install.d/manifest.scm && \
     guix gc'
 
-ENV PATH=/workspaces/.profile/bin:/src/oops/profile/bin:$PATH
+ENV PATH=/workspaces/.oops/profile/bin:/src/oops/profile/bin:$PATH
 ENV WORKSPACE=/workspaces
 
 COPY entrypoint.sh /entrypoint.sh
