@@ -1,7 +1,7 @@
 (list (channel
        (name 'guxti)
        (branch "master")
-       (commit "8f8d1400c021400460333974b5925fd5cd534127")
+       (commit "16ffa1864c89cf30872877eef9adb98a0ae47852")
        (url "https://github.com/TxGVNN/guxti"))
       (channel
        (name 'guix)
