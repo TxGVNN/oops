@@ -1,8 +1,0 @@
-(develop-docker)
-(develop-python)
-(develop-ts)
-(develop-go)
-(develop-html)
-(develop-java)
-(develop-restclient)
-(develop-gitlab-ci)
