@@ -31,7 +31,7 @@ _link "$PROFILE/etc/.bash_logout" ~/.bash_logout
 
 mkdir -p $HOME/.bashrc.d
 for i in $(ls -A "$PROFILE/etc/.bashrc.d/"); do
-    _link "$PROFILE/.bashrc.d/$i" $HOME/.bashrc.d/$i
+    _link "$PROFILE/etc/.bashrc.d/$i" $HOME/.bashrc.d/$i
 done
 # source
 . "${HOME}/.guix-profile/etc/profile"
