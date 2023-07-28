@@ -67,6 +67,8 @@
         "emacs-yasnippet"
         "emacs-yasnippet-snippets"
         "emacs-ztree"
+        ;; dotfiles
+        "oops"
         ;; libs
         "tree-sitter"
         "tree-sitter-bash"
