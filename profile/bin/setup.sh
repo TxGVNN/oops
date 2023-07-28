@@ -23,14 +23,14 @@ if [ ! -d "$OOPS_DIR" ]; then
 fi
 PROFILE="${OOPS_DIR}/profile"
 
-_link "$PROFILE/.emacs.d" ~/.emacs.d
-_link "$PROFILE/.screenrc" ~/.screenrc
-_link "$PROFILE/.bashrc" ~/.bashrc
-_link "$PROFILE/.bash_profile" ~/.bash_profile
-_link "$PROFILE/.bash_logout" ~/.bash_logout
+_link "$PROFILE/etc/emacs.d" ~/.emacs.d
+_link "$PROFILE/etc/screenrc" ~/.screenrc
+_link "$PROFILE/etc/.bashrc" ~/.bashrc
+_link "$PROFILE/etc/.bash_profile" ~/.bash_profile
+_link "$PROFILE/etc/.bash_logout" ~/.bash_logout
 
 mkdir -p $HOME/.bashrc.d
-for i in $(ls -A "$PROFILE/.bashrc.d/"); do
+for i in $(ls -A "$PROFILE/etc/.bashrc.d/"); do
     _link "$PROFILE/.bashrc.d/$i" $HOME/.bashrc.d/$i
 done
 # source

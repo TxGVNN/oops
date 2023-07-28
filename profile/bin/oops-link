@@ -1,0 +1,62 @@
+#!/usr/bin/env bash
+[ "${DEBUG:-0}" -eq 0 ] || set -x
+
+_help(){
+    echo "Usage: $(basename $0) [-d /dir-path.. ]"
+    exit 1
+}
+
+_link(){
+    SRC="$1"
+    DST="$2"
+    if [ ! -e "$SRC" ]; then
+        echo "E: $SRC is not exist!"
+        return
+    fi
+    if [ -e "$DST" ]; then
+        if [ "$(stat "$DST" | head -n1 | cut -f6 -d' ')" == "$SRC" ]; then
+            echo "W: $DST is linked, skip"
+            return
+        fi
+        echo "W: $DST is exist, backup it"
+        mv -v "$DST" "${DST}.$(date +%F@%R.%s)"
+    fi
+
+    ln -svf "$SRC" "$DST"
+}
+
+if [ "$(id -u)" -eq 0 ]; then
+    echo "You are root! Please switch user"
+    exit 1
+fi
+while getopts d: opt; do
+    case "$opt" in
+        d) DIR="$OPTARG" ;;
+        *) _help ;;
+    esac
+done
+if [ -z "${DIR}" ]; then
+    ARG0=$0
+    DIR=${ARG0%%bin/oops-link}
+fi
+
+# Don't allow the relative path
+if [[ "$DIR" == "."* ]]; then
+    _help
+fi
+
+DIR=${DIR%%/}
+echo "I: Check ${DIR}"
+if [ ! -d "$DIR" ]; then
+    echo "E: ${DIR} Not exist!"
+    exit 1
+fi
+echo "I: Verify ${DIR} done"
+
+# emacs
+_link "$DIR/etc/emacs.d/init.el" ~/.emacs.d/init.el
+_link "$DIR/etc/emacs.d/early-init.el" ~/.emacs.d/early-init.el
+_link "$DIR/etc/emacs.d/personal.el" ~/.emacs.d/personal.el
+_link "$DIR/etc/emacs.d/setup.el" ~/.emacs.d/setup.el
+# screen
+_link "$DIR/etc/.screenrc" ~/.screenrc

@@ -1,0 +1,39 @@
+#!/usr/bin/env bash
+[ "${DEBUG:-0}" -eq 0 ] || set -x
+
+_help(){
+    echo "Usage: oops-unlink"
+    exit 1
+}
+
+ARG0=$0
+SETUP=${ARG0%%unlink}link
+
+pushd "$HOME" > /dev/null
+for i in $(awk '/_link/ {print $2$3}' "${SETUP}"); do
+    src=${i%%\"~\/*}        # "$DIR/rofs/dot/abc
+    src_suff=${src##*\$DIR} # /rofs/dot/abc
+    dst="${i#*~\/}"         # .abc
+
+    # list of dst backup version
+    list=""
+    for j in $dst.*@*; do
+        [[ $j == "$dst.*@*" ]] && continue
+        list=$list" "$j
+    done
+
+    # delete the link
+    if [ -e "$dst" ] && [[ "$(stat "$dst" | head -n1 | awk '{print $4}')" == *"$src_suff" ]]; then
+        echo "I: Remove $dst"
+        rm "$dst" -rf
+    fi
+
+    # check the backup
+    [ -z "$list" ] && continue;
+    # select the last one backup
+    select=${list##*' '}
+    # restore the backup version
+    echo "I: Restore $select"
+    mv "$select" "$dst"
+done
+popd >/dev/null
