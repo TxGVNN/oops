@@ -151,11 +151,10 @@ function ps1(){
 
 function cdenv(){
     if [ -z "$1" ]; then
-        cd || exit 1
+        command cd || return 1
     else
-        cd "$1"
+        command cd "$1"
     fi
-
     # .bin #TxGVNN
     if [ -e .bin ]; then
         if [[ $PATH != *"$(pwd)/.bin"* ]]; then
