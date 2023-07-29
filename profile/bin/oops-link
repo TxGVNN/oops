@@ -25,10 +25,6 @@ _link(){
     ln -svf "$SRC" "$DST"
 }
 
-if [ "$(id -u)" -eq 0 ]; then
-    echo "You are root! Please switch user"
-    exit 1
-fi
 while getopts d: opt; do
     case "$opt" in
         d) DIR="$OPTARG" ;;
