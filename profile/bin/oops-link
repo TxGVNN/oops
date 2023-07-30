@@ -52,6 +52,5 @@ echo "I: Verify ${DIR} done"
 # emacs
 _link "$DIR/etc/emacs.d/init.el" ~/.emacs.d/init.el
 _link "$DIR/etc/emacs.d/early-init.el" ~/.emacs.d/early-init.el
-_link "$DIR/etc/emacs.d/personal.el" ~/.emacs.d/personal.el
 # screen
 _link "$DIR/etc/screenrc" ~/.screenrc
