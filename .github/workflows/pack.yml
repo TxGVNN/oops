@@ -43,7 +43,8 @@ jobs:
       shell: bash
       run: |
         mkdir packages
-        guix pack -L ./ -f tarball --root=packages/guix.tar.gz -m guix-install.d/pack.scm
+        wget -O - https://txgvnn.github.io/guxti/signing-key.pub | sudo guix archive --authorize
+        guix pack -L ./ -f tarball --root=packages/guix.tar.gz -m guix-install.d/pack.scm --substitute-urls="https://ci.guix.gnu.org https://bordeaux.guix.gnu.org https://txgvnn.github.io/guxti"
 
     - name: Setup Pages
       uses: actions/configure-pages@v3
