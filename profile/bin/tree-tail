@@ -1,0 +1,68 @@
+#!/usr/bin/env bash
+[ "${DEBUG:-0}" -eq 0 ] || set -x
+
+function help(){
+    echo "Usage:"
+    echo -e "\t$(basename $0) -e/--encode <files>\t\t\t Encode files/dirs to stdout"
+    echo -e "\t$(basename $0) -d/--decode [file][< file]\t Decode file/stdin to current dir"
+}
+
+function decode(){
+    set -- "${1:-/dev/stdin}" "${@:2}"
+    local input=$1
+    if [ -z "$input" ]; then
+        help
+        exit 1
+    fi
+    local file=/dev/null
+    while IFS='' read -r line; do
+        if [[ $line == *"==>"*"<==" ]]; then
+            step1=${line%%<==}
+            file=${step1##==>}
+            if [ ! ${file%/*} == ${file} ]; then
+                mkdir ${file%/*} -p
+            fi
+            printf "" > $file
+        else
+            [ "$(cat $file)" == "" ] || echo "" >> $file
+            echo -n "$line" >> $file
+        fi
+    done < "$input"
+}
+
+function encode(){
+    local dir=$1
+    if [ -z "$dir" ]; then
+        help
+        exit 1
+    fi
+    find $@ -type f | sort | xargs tail -vn +0
+}
+
+for opt in "$@"; do
+    if [[ "$opt" == [-]* ]]; then
+        case ${opt:1:1} in
+            e) ENCODE=0 ;;
+            d) DECODE=0 ;;
+            -)
+                case ${opt:2} in
+                    encode) ENCODE=0 ;;
+                    decode) DECODE=0 ;;
+                esac;;
+        esac
+    else
+        args_string+="$IFS$opt"
+    fi
+done
+
+args=($args_string)
+
+if [ $ENCODE ]; then
+    encode ${args[@]}
+    exit 0
+fi
+if [ $DECODE ]; then
+    decode ${args[0]}
+    exit 0
+fi
+help
