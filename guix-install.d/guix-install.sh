@@ -499,7 +499,8 @@ sys_authorize_build_farms()
 	ci.guix.gnu.org
 	bordeaux.guix.gnu.org
     )
-
+    wget -O - https://txgvnn.github.io/guxti/signing-key.pub | guix archive --authorize \
+        && _msg "${PAS}Authorized public key for txgvnn.github.io/guxti"
     if prompt_yes_no "Permit downloading pre-built package binaries from the \
 project's build farms?"; then
 	for host in "${hosts[@]}"; do

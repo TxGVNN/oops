@@ -3,7 +3,7 @@ USER root
 COPY ./ /src/oops
 RUN find /src/oops/guix-install.d/gpg_signing_keys -type f -exec gpg --import {} \; && \
     bash /src/oops/guix-install.d/guix-install.sh && \
-    start-stop-daemon --user root --pidfile /tmp/guix.sock --background --start --exec /var/guix/profiles/per-user/root/current-guix/bin/guix-daemon -- --build-users-group=guixbuild --disable-chroot -c 2 -M 2 && \
+    start-stop-daemon --user root --pidfile /tmp/guix.sock --background --start --exec /var/guix/profiles/per-user/root/current-guix/bin/guix-daemon -- --build-users-group=guixbuild --disable-chroot -c 2 -M 2 --substitute-urls="https://ci.guix.gnu.org https://bordeaux.guix.gnu.org https://txgvnn.github.io/guxti" && \
     sleep 1 && \
     chown -R gitpod. /src/oops && \
     sudo -H -u gitpod bash -c 'mkdir -p ~/.config/guix && \
