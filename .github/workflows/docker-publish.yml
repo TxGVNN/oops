@@ -47,14 +47,16 @@ jobs:
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
 
-      - name: Build and push Gitpod.io imaGe
+      - name: Build and push Gitpod.io image
         uses: docker/build-push-action@ad44023a93711e3deb337508980b4b5e9bcdc5dc
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
           context: .
           file: ./Dockerfile.gitpod
           push: ${{ github.event_name != 'pull_request' }}
-          tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/gitpod:${{ steps.meta.outputs.version }}
+          tags: |
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/gitpod:${{ steps.meta.outputs.version }}
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/gitpod:latest
           labels: ${{ steps.meta.outputs.labels }}
 
       - name: Build and push Codespace image
@@ -64,5 +66,7 @@ jobs:
           context: .
           file: ./Dockerfile.codespace
           push: ${{ github.event_name != 'pull_request' }}
-          tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/codespace:${{ steps.meta.outputs.version }}
+          tags: |
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/codespace:${{ steps.meta.outputs.version }}
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/codespace:latest
           labels: ${{ steps.meta.outputs.labels }}
