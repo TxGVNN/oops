@@ -27,7 +27,7 @@
         "emacs-embark@0.22.1.20230427"
         "emacs-engine-mode"
         "emacs-envrc"
-        "emacs-expand-region"
+        "emacs-expreg"
         "emacs-forge"
         "emacs-gcmh"
         "emacs-geiser"
