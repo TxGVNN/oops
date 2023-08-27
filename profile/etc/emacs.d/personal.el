@@ -1,5 +1,5 @@
 ;; C-x P
-(setq project-temp-root "/workspace/")
+(setq project-temp-root (concat (getenv "WORKSPACE") "/"))
 
 (unless (package-installed-p 'copilot)
   (package-vc-install "https://github.com/zerolfx/copilot.el"))
