@@ -3,17 +3,13 @@
 
 function help(){
     echo "Usage:"
-    echo -e "\t$(basename $0) -e/--encode <files>\t\t\t Encode files/dirs to stdout"
-    echo -e "\t$(basename $0) -d/--decode [file][< file]\t Decode file/stdin to current dir"
+    echo -e "\t$(basename $0) -e/--encode <files>\t Encode files/dirs/stdin to stdout"
+    echo -e "\t$(basename $0) -d/--decode <file>\t Decode file/stdin to current dir"
 }
 
 function decode(){
-    set -- "${1:-/dev/stdin}" "${@:2}"
-    local input=$1
-    if [ -z "$input" ]; then
-        help
-        exit 1
-    fi
+    local input=${1:-/dev/stdin}
+    [ -z "$input" ] && { help; exit 1; }
     local file=/dev/null
     while IFS='' read -r line; do
         if [[ $line == *"==>"*"<==" ]]; then
@@ -31,11 +27,10 @@ function decode(){
 }
 
 function encode(){
-    local dir=$1
-    if [ -z "$dir" ]; then
-        help
-        exit 1
-    fi
+    [ -p /dev/stdin ] && set -- "${1:-/dev/stdin}"
+    [ -z "$1" ] && { help; exit 1; }
+    [ "$1" == "/dev/stdin" ] && set -- $(cat /dev/stdin)
+
     find $@ -type f | sort | xargs tail -vn +0
 }
 
@@ -57,12 +52,6 @@ done
 
 args=($args_string)
 
-if [ $ENCODE ]; then
-    encode ${args[@]}
-    exit 0
-fi
-if [ $DECODE ]; then
-    decode ${args[0]}
-    exit 0
-fi
+[ $ENCODE ] && encode "${args[@]}" && exit 0
+[ $DECODE ] && decode "${args[0]}" && exit 0
 help

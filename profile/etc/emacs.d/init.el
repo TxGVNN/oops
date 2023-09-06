@@ -18,7 +18,7 @@
 (add-hook 'emacs-startup-hook
           (lambda ()
             (setq file-name-handler-alist doom--file-name-handler-alist)))
-(defvar emacs-config-version "20230821.0244")
+(defvar emacs-config-version "20230906.1343")
 (defvar hidden-minor-modes '(whitespace-mode))
 
 (require 'package)
@@ -824,6 +824,7 @@
    ("C-x D" . detached-list-sessions)
    :map project-prefix-map
    ("C" . project-detached-compile)))
+(use-package 0x0 :ensure t :defer t)
 (use-package dpaste :ensure t :defer t)
 (use-package gist :ensure t :defer 1)
 
@@ -1289,23 +1290,6 @@
     (other-window 1 nil)
     (message "Override %s by %s to update" user-init-file upstream)))
 
-(use-package erc :defer t
-  :config
-  (setq erc-hide-list '("JOIN" "PART" "QUIT"))
-  (setq erc-default-server "irc.libera.chat")
-  (setq erc-prompt-for-password nil))
-(use-package ercn
-  :ensure t :defer t
-  :hook (ercn-notify . do-notify)
-  :config
-  (setq ercn-notify-rules
-        '((current-nick . all)
-          (keyword . all)
-          (pal . ("#emacs" "#guix"))
-          (query-buffer . all)))
-  (defun do-notify (nick msg)
-    (call-process "notify-send" nil nil nil "ERC" nick)))
-
 ;; org-mode
 (use-package org :defer t
   :hook
@@ -1366,8 +1350,7 @@
   :hook (python-ts-mode . eglot-ensure)
   :config
   (setq python-indent-guess-indent-offset-verbose nil)
-  (when (and (executable-find "python3")
-             (string= python-shell-interpreter "python"))
+  (when (executable-find "python3")
     (setq python-shell-interpreter "python3"))
   (defun python-pip-install-requirements()
     (interactive)
