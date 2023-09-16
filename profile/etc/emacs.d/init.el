@@ -18,7 +18,7 @@
 (add-hook 'emacs-startup-hook
           (lambda ()
             (setq file-name-handler-alist doom--file-name-handler-alist)))
-(defvar emacs-config-version "20230906.1343")
+(defvar emacs-config-version "20230916.1542")
 (defvar hidden-minor-modes '(whitespace-mode))
 
 (require 'package)
@@ -236,7 +236,7 @@
   :ensure t :defer t
   :config  ;; j-T in magit-status buffer
   (setq magit-todos-branch-list nil
-        magit-todos-update nil)
+        magit-todos-update 15)
   :init
   (with-eval-after-load 'magit
     (magit-todos-mode)))
@@ -808,6 +808,20 @@
   (detached-init-allow-list '(compile org))
   (detached-terminal-data-command system-type)
   :config
+  (defun shell-dtach (&optional buffer)
+    "Start dtach in shell(BUFFER).
+Why not use detached, because detached doesnt run with -A"
+    (interactive)
+    (let* ((explicit-shell-file-name (if (executable-find "dtach")
+                                         "dtach" nil))
+           (file-name (format "%s/%s.dtach" temporary-file-directory
+                              (replace-regexp-in-string
+                               "/" "~" default-directory)))
+           (explicit-dtach-args `("-A" ,file-name "-z"
+                                  "/bin/bash" "--noediting" "-login")))
+      (if buffer
+          (shell buffer)
+        (shell (format "*dtach:%s*" default-directory)))))
   (defun project-detached-compile ()
     "Run `detached-compile' in the project root."
     (declare (interactive-only compile))
@@ -886,7 +900,9 @@
 
 ;; BUILTIN
 (use-package tramp :defer t
-  :config (setq tramp-allow-unsafe-temporary-files t))
+  :custom
+  (tramp-default-method "ssh")
+  (tramp-allow-unsafe-temporary-files t))
 (use-package ediff
   :ensure nil :defer t
   :config
@@ -1094,16 +1110,16 @@
       (insert string)
       (if file (write-file file nil))
       (switch-to-buffer (current-buffer)))))
-(defun save-region-to-temp ()
-  "Save region to a new temp file."
-  (interactive)
+(defun save-region-to-temp (&optional prefix)
+  "Save region to a tempfile, if PREFIX is set, prompt for file name."
+  (interactive "P")
   (let ((filename
          (make-temp-file
           (concat (file-name-base (buffer-name)) "_"
                   (unless (string-prefix-p "*scratch-" (buffer-name))
                     (format-time-string "%Y%m%d-%H%M%S_")))
           nil (file-name-extension (buffer-name) t))))
-    (copy-region-to-scratch filename)))
+    (copy-region-to-scratch (if prefix (read-file-name "Save to file: " nil filename) filename))))
 (defun find-file-rec ()
   "Find a file in the current working directory recursively."
   (interactive)
@@ -1346,7 +1362,7 @@
                       (substring (md5 (format "%s%s" (emacs-pid) (current-time))) 0 4) var var)))))
 
 ;; Python: `pip install python-lsp-server[all]'
-(use-package python-ts-mode
+(use-package python
   :hook (python-ts-mode . eglot-ensure)
   :config
   (setq python-indent-guess-indent-offset-verbose nil)
