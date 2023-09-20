@@ -18,7 +18,7 @@
 (add-hook 'emacs-startup-hook
           (lambda ()
             (setq file-name-handler-alist doom--file-name-handler-alist)))
-(defvar emacs-config-version "20230916.1542")
+(defvar emacs-config-version "20230920.1505")
 (defvar hidden-minor-modes '(whitespace-mode))
 
 (require 'package)
@@ -310,29 +310,6 @@
            (default-directory (project-root pr))
            (dirs (list default-directory)))
       (project-find-file-in (thing-at-point 'filename) dirs pr include-all)))
-  (defun shell--save-history (&rest _)
-    "Save `shell' history."
-    (let ((inhibit-message t))
-      (comint-write-input-ring)))
-  (advice-add #'comint-add-to-input-history :after #'shell--save-history)
-  (defun shell-with-histfile(buffer-name histfile)
-    "Create a shell BUFFER-NAME and set comint-input-ring-file-name is HISTFILE."
-    (let* ((shell-directory-name (locate-user-emacs-file "shell"))
-           (comint-history-file (expand-file-name
-                                 (format "%s/%s.history" shell-directory-name histfile)))
-           (comint-input-ring-file-name comint-history-file)
-           (comint-input-ring (make-ring 1))
-           (buff (get-buffer-create buffer-name)))
-      ;; HACK: make shell-mode doesnt set comint-input-ring-file-name
-      (ring-insert comint-input-ring "uname")
-      (unless (file-exists-p shell-directory-name)
-        (make-directory shell-directory-name t))
-      (with-current-buffer (shell buff)
-        (set-buffer buff)
-        (setq-local comint-input-ring-file-name comint-history-file)
-        (comint-read-input-ring t)
-        (set-process-sentinel (get-buffer-process (current-buffer))
-                              #'shell-write-history-on-exit))))
   (defun project-shell-with-histfile ()
     "Override `project-shell'."
     (interactive)
@@ -340,11 +317,11 @@
            (project-shell-name (project-prefixed-buffer-name "shell"))
            (shell-buffer (get-buffer project-shell-name)))
       (if current-prefix-arg
-          (shell-with-histfile (generate-new-buffer-name project-shell-name)
-                               project-shell-name)
+          (shell-hist (generate-new-buffer-name project-shell-name)
+                      project-shell-name)
         (if (get-buffer-process shell-buffer)
             (pop-to-buffer-same-window shell-buffer)
-          (shell-with-histfile project-shell-name project-shell-name)))))
+          (shell-hist project-shell-name project-shell-name)))))
   (advice-add #'project-shell :override #'project-shell-with-histfile)
   (defun project-consult-grep (&optional initial)
     "Using consult-grep(INITIAL) in project."
@@ -879,7 +856,36 @@ Why not use detached, because detached doesnt run with -A"
     ('eshell-mode (eshell-send-input))
     ('term-mode (term-send-input))))
 (use-package shell
-  :bind (:map shell-mode-map ("C-c d" . interactive-cd)))
+  :bind (:map shell-mode-map ("C-c d" . interactive-cd))
+  :config
+  (defun shell--save-history (&rest _)
+    "Save `shell' history."
+    (let ((inhibit-message t))
+      (comint-write-input-ring)))
+  (advice-add #'comint-add-to-input-history :after #'shell--save-history)
+  (defun shell-hist(buffer-name &optional histfile)
+    "Create a shell BUFFER-NAME and set `comint-input-ring-file-name' is HISTFILE."
+    (let* ((shell-directory-name (locate-user-emacs-file "shell"))
+           (histfile (or histfile buffer-name))
+           (comint-history-file (expand-file-name
+                                 (format "%s/%s.%s.history" shell-directory-name
+                                         (replace-regexp-in-string
+                                          "/" "~" (abbreviate-file-name default-directory))
+                                         histfile)))
+           (comint-input-ring-file-name comint-history-file)
+           (comint-input-ring (make-ring 1))
+           (buff (get-buffer-create buffer-name)))
+      ;; HACK: make shell-mode doesnt set comint-input-ring-file-name
+      (ring-insert comint-input-ring "uname")
+      (unless (file-exists-p shell-directory-name)
+        (make-directory shell-directory-name t))
+      (with-current-buffer (shell buff)
+        (setq-local comint-input-ring-file-name comint-history-file)
+        (comint-read-input-ring t)
+        (set-process-sentinel (get-buffer-process (current-buffer))
+                              #'shell-write-history-on-exit))
+      (pop-to-buffer buff display-comint-buffer-action)
+      buff)))
 (use-package term
   :hook
   (term-mode . (lambda()
@@ -941,6 +947,12 @@ Why not use detached, because detached doesnt run with -A"
   (compilation-ask-about-save nil)  ; save all buffers on `compile'
   (compilation-scroll-output t)
   :config
+  (defun compile-to-buffer (command buffer-name &optional comint)
+    "Run compile COMMAND and output to BUFFER-NAME. Overwrite if exists."
+    (let ((compilation-buffer-name-function
+           (lambda (_)
+             (format "*compile:%s*" buffer-name))))
+      (compile command comint)))
   (defun doom-apply-ansi-color-to-compilation-buffer-h ()
     "Applies ansi codes to the compilation buffers."
     (with-silent-modifications
@@ -969,7 +981,7 @@ Why not use detached, because detached doesnt run with -A"
   :demand
   :init (load-theme 'modus-vivendi t))
 
-;; MODELINE
+;;; MODELINE
 (setq mode-line-position
       '((line-number-mode ("(%l" (column-number-mode ",%c")))
         (-4 ":%p" ) (")")))
@@ -1199,11 +1211,13 @@ Why not use detached, because detached doesnt run with -A"
  ;; If there is more than one, they won't work right.
  '(Buffer-menu-use-header-line nil)
  '(auto-revert-mode-text " ~")
+ '(make-backup-files nil) ;; Turn off backup files
  '(backup-by-copying t)
+ '(delete-old-versions t)
+ '(version-control t)
  '(browse-url-browser-function 'eww-browse-url)
  '(column-number-mode t)
  '(default-input-method "vietnamese-telex")
- '(delete-old-versions t)
  '(delete-selection-mode t)
  '(eldoc-minor-mode-string " σ")
  '(electric-indent-mode nil)
@@ -1216,7 +1230,6 @@ Why not use detached, because detached doesnt run with -A"
  '(inhibit-startup-screen t)
  '(initial-major-mode 'fundamental-mode)
  '(initial-scratch-message nil)
- '(kept-new-versions 6)
  '(kill-do-not-save-duplicates t)
  '(menu-bar-mode nil)
  '(minibuffer-depth-indicate-mode t)
@@ -1231,7 +1244,6 @@ Why not use detached, because detached doesnt run with -A"
  '(tool-bar-mode nil)
  '(use-dialog-box nil)
  '(vc-follow-symlinks nil)
- '(version-control t)
  '(warning-suppress-log-types '((comp)))
  '(whitespace-style
    '(face tabs trailing space-before-tab newline empty tab-mark))
