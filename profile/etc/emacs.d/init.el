@@ -18,7 +18,7 @@
 (add-hook 'emacs-startup-hook
           (lambda ()
             (setq file-name-handler-alist doom--file-name-handler-alist)))
-(defvar emacs-config-version "20230920.1505")
+(defvar emacs-config-version "20230924.0800")
 (defvar hidden-minor-modes '(whitespace-mode))
 
 (require 'package)
@@ -434,7 +434,8 @@
       (interactive (list (project-prompt-project-dir)))
       (let ((command (if (symbolp project-switch-commands)
                          project-switch-commands
-                       (project--switch-project-command))))
+                       (project--switch-project-command)))
+            (default-directory dir))
         (persp-switch dir)
         (let ((project-current-directory-override dir))
           (call-interactively command)))))
@@ -836,7 +837,7 @@ Why not use detached, because detached doesnt run with -A"
     "Auto update name with SUFFIX.ext."
     (interactive "p")
     (let ((filename (file-name-nondirectory (dired-get-file-for-visit)))
-          (timestamp (format-time-string "%Y%m%d-%H%M%S")))
+          (timestamp (format-time-string "%Y%m%d%H%M%S")))
       (rename-file filename (concat filename "_" timestamp) t)
       (revert-buffer)))
   (setq dired-listing-switches "-alh"))
@@ -855,6 +856,13 @@ Why not use detached, because detached doesnt run with -A"
     ('shell-mode (comint-send-input))
     ('eshell-mode (eshell-send-input))
     ('term-mode (term-send-input))))
+(use-package with-editor
+  :ensure t :defer t
+  :init
+  (add-hook 'shell-mode-hook  #'with-editor-export-editor)
+  (add-hook 'eshell-mode-hook #'with-editor-export-editor)
+  (add-hook 'term-exec-hook   #'with-editor-export-editor)
+  (add-hook 'vterm-mode-hook  #'with-editor-export-editor))
 (use-package shell
   :bind (:map shell-mode-map ("C-c d" . interactive-cd))
   :config
