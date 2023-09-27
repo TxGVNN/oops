@@ -1,5 +1,25 @@
-FROM gitpod/workspace-base:2022-11-15-17-00-18
-USER root
+FROM docker.io/library/debian:bullseye-20230919-slim
+
+RUN apt-get update && \
+    DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+    ca-certificates curl dirmngr git gnupg less libc6 libssl1.1 libstdc++6 \
+    locales netbase sudo tar wget xz-utils procps \
+    openssh-server openssh-client lsof bash-completion \
+    man screen iproute2 && \
+    rm -rf /var/lib/apt/lists/* && \
+    mkdir -p /src
+RUN echo "en_US.UTF-8 UTF-8" >> /etc/locale.gen && locale-gen
+ENV LANG=en_US.UTF-8
+ENV LOCALE_ARCHIVE=/usr/lib/locale/locale-archive
+
+### Gitpod user ###
+# '-l': see https://docs.docker.com/develop/develop-images/dockerfile_best-practices/#user
+RUN useradd -l -u 33333 -G sudo -md /home/gitpod -s /bin/bash -p gitpod gitpod \
+    # Remove `use_pty` option and enable passwordless sudo for users in the 'sudo' group
+    && sed -i.bkp -e '/Defaults\tuse_pty/d' -e 's/%sudo\s\+ALL=(ALL\(:ALL\)\?)\s\+ALL/%sudo ALL=NOPASSWD:ALL/g' /etc/sudoers \
+    # To emulate the workspace-session behavior within dazzle build env
+    && mkdir /workspace && chown -hR gitpod:gitpod /workspace
+
 COPY ./ /src/oops
 RUN find /src/oops/guix-install.d/gpg_signing_keys -type f -exec gpg --import {} \; && \
     bash /src/oops/guix-install.d/guix-install.sh && \
@@ -14,8 +34,10 @@ RUN find /src/oops/guix-install.d/gpg_signing_keys -type f -exec gpg --import {}
 
 USER gitpod
 WORKDIR /home/gitpod
-ENV PATH=/workspace/.oops/profile/bin:/src/oops/profile/bin:$PATH
 ENV WORKSPACE=/workspace
+ENV PATH=/workspace/.oops/profile/bin:/src/oops/profile/bin:$PATH
+
 ARG REVISION
 LABEL org.opencontainers.image.source="https://github.com/TxGVNN/oops"
 LABEL org.opencontainers.image.documentation="https://github.com/TxGVNN/oops/blob/${REVISION}/README.md"
+LABEL org.opencontainers.image.description="Gitpod IDE, Powerful by Guix!"

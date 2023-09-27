@@ -15,6 +15,18 @@
       "version": "1.0.9"
     }
   },
+  "mounts": [
+      {
+          "source": "/var/run/docker.sock",
+          "target": "/var/run/docker-host.sock",
+          "type": "bind"
+      },
+      {
+          "source": "dind-var-lib-docker-${devcontainerId}",
+          "target": "/var/lib/docker",
+          "type": "volume"
+      }
+  ],
   "postCreateCommand": "setup.sh",
   "remoteUser": "vscode"
 }
