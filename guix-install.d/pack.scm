@@ -44,7 +44,6 @@
         "emacs-hl-todo"
         "emacs-inspector"
         "emacs-isearch-mb"
-        "emacs-lua-mode"
         "emacs-magit"
         "emacs-magit-todos"
         "emacs-marginalia"
