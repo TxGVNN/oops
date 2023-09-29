@@ -51,7 +51,7 @@ jobs:
         run: |
           echo "REVISION=${{ github.sha }}" > VERSION
           echo "VERSION=${{ steps.meta.outputs.version }}" >> VERSION
-          echo "BUILD_DATE=$(shell date -u +'%Y-%m-%dT%H:%M:%SZ')" >> VERSION
+          echo "BUILD_DATE=$(date -u +'%Y-%m-%dT%H:%M:%SZ')" >> VERSION
 
       - name: Build and push Gitpod.io image
         uses: docker/build-push-action@ad44023a93711e3deb337508980b4b5e9bcdc5dc
