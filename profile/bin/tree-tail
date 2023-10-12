@@ -8,7 +8,7 @@ function help(){
 }
 
 function decode(){
-    local input=${1:-/dev/stdin}
+    local input=${1:-/proc/self/fd/0}
     [ -z "$input" ] && { help; exit 1; }
     local file=/dev/null
     while IFS='' read -r line; do
@@ -27,9 +27,9 @@ function decode(){
 }
 
 function encode(){
-    [ -p /dev/stdin ] && set -- "${1:-/dev/stdin}"
+    [ -p /proc/self/fd/0 ] && set -- "${1:-/proc/self/fd/0}"
     [ -z "$1" ] && { help; exit 1; }
-    [ "$1" == "/dev/stdin" ] && set -- $(cat /dev/stdin)
+    [ "$1" == "/proc/self/fd/0" ] && set -- $(cat /proc/self/fd/0)
 
     find $@ -type f | sort | xargs tail -vn +0
 }

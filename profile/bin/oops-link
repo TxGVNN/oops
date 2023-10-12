@@ -50,6 +50,7 @@ fi
 echo "I: Verify ${DIR} done"
 
 # emacs
+mkdir -p ~/.emacs.d
 _link "$DIR/etc/emacs.d/init.el" ~/.emacs.d/init.el
 _link "$DIR/etc/emacs.d/early-init.el" ~/.emacs.d/early-init.el
 # screen
