@@ -76,6 +76,6 @@ if [ -n "$CODESPACES" ]; then
     # Codespaces - Docker
     if [ ! -e /var/run/docker.sock ] && [ -e /var/run/docker-host.sock ]; then
         run_as_root ln -svf /var/run/docker-host.sock /var/run/docker.sock
-        run_as_root chown vscode. /var/run/docker-host.sock
     fi
+    run_as_root chown vscode. /var/run/docker-host.sock
 fi
