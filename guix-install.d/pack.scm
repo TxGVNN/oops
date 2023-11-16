@@ -26,6 +26,7 @@
         "emacs-docker-compose-mode"
         "emacs-dockerfile-mode"
         "emacs-dumb-jump"
+        "emacs-eat"
         "emacs-eev"
         "emacs-elfeed"
         "emacs-elpa-mirror"
