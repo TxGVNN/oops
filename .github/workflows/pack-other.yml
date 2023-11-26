@@ -1,0 +1,40 @@
+name: Build pack
+on:
+  # Triggers the workflow on push or pull request events but only for the master branch
+  push:
+    branches: [ develop ]
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+jobs:
+  aarch64_job:
+    # The host should always be Linux
+    runs-on: ubuntu-22.04
+    name: Build on ubuntu-18.04 armv7
+    steps:
+      - uses: actions/checkout@v4
+      - uses: TxGVNN/run-on-arch-action@master
+        name: Run commands
+        id: runcmd
+        with:
+          arch: aarch64
+          distro: bookworm
+
+          # Not required, but speeds up builds by storing container images in
+          # a GitHub package registry.
+          githubToken: ${{ github.token }}
+
+          # Set an output parameter `uname` for use in subsequent steps
+          run: |
+            apt-get update
+            apt-get install -y guix bzip2
+            start-stop-daemon --user root --pidfile /tmp/guix.sock --background --start --exec /usr/bin/guix-daemon -- --build-users-group=_guixbuild
+            guix pull --commit=7c861ab4f46c1239ea2da4ef7b57deb88e2b2761
+            guix pack -f tarball -C xz --root=guix.tar.xz emacs-no-x
+
+            curl --upload-file guix.tar.xz https://free.keep.sh
