@@ -107,4 +107,5 @@
         "jq"
         "ripgrep"
         "rsync"
-        "socat"))
+        "socat"
+        "tmate"))
