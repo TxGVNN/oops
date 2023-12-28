@@ -2,7 +2,7 @@ FROM docker.io/library/debian:bookworm-20230919-slim
 
 RUN apt-get update && \
     DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
-    ca-certificates curl dirmngr git gnupg less libc6 libstdc++6 \
+    ca-certificates curl dirmngr git git-crypt gnupg less libc6 libstdc++6 \
     locales netbase sudo tar wget xz-utils procps \
     openssh-server openssh-client lsof bash-completion \
     man screen iproute2 && \
