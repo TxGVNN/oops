@@ -1,10 +1,10 @@
 (list (channel
        (name 'guxti)
        (branch "master")
-       (commit "519d2fbd72f987e3f5a6516e51629d3f6de0dbef")
+       (commit "9806dad82c3fb483fb6e6df86bbc9cca3845539f")
        (url "https://github.com/TxGVNN/guxti"))
       (channel
        (name 'guix)
        (branch "master")
-       (commit "7c861ab4f46c1239ea2da4ef7b57deb88e2b2761")
+       (commit "963a21bedcdb19c3a48af286b5b0cdcefa97fdb8")
        (url "https://git.savannah.gnu.org/git/guix.git")))
