@@ -2,7 +2,7 @@ name: Build pack
 on:
   # Triggers the workflow on push or pull request events but only for the master branch
   push:
-    branches: [ main ]
+    branches: [ debug ]
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
 
@@ -39,10 +39,12 @@ jobs:
                   (channel
                    (name 'guxti)
                    (url "https://github.com/TxGVNN/guxti")))
+    - name: Setup tmate session
+      uses: mxschmitt/action-tmate@v3
     - name: Get and build packages
       shell: bash
       run: |
-        mkdir packages
+        mkdir packages -p
         wget -O - https://txgvnn.github.io/guxti/signing-key.pub | sudo guix archive --authorize
         guix package -L ./ -m guix-install.d/pack.scm --substitute-urls="https://ci.guix.gnu.org https://bordeaux.guix.gnu.org https://txgvnn.github.io/guxti"
         guix pack -L ./ -f tarball -C xz --root=packages/guix.tar.xz -m guix-install.d/pack.scm --substitute-urls="https://ci.guix.gnu.org https://bordeaux.guix.gnu.org https://txgvnn.github.io/guxti"
