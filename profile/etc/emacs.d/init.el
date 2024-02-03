@@ -18,7 +18,7 @@
 (add-hook 'emacs-startup-hook
           (lambda ()
             (setq file-name-handler-alist doom--file-name-handler-alist)))
-(defvar emacs-config-version "20240202.0712")
+(defvar emacs-config-version "20240203.1318")
 (defvar hidden-minor-modes '(whitespace-mode))
 
 (require 'package)
@@ -1508,7 +1508,7 @@ Why not use detached, because detached doesnt run with -A"
 
 ;; Erlang
 (use-package erlang
-  :ensure t
+  :ensure t :defer t
   :hook (erlang-mode . eglot-ensure))
 
 ;; Terraform
