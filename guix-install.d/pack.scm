@@ -22,7 +22,6 @@
   (list (first (lookup-inferior-packages inferior "emacs-no-x")))
   (specifications->packages
    (list "emacs-ace-window"
-         "emacs-ace-window"
          "emacs-ansible-doc"
          "emacs-anzu"
          "emacs-avy"
@@ -121,4 +120,4 @@
          "ripgrep"
          "rsync"
          "socat"
-         "tmate"))
+         "tmate"))))
