@@ -8,12 +8,16 @@
 ;; enabling `gcmh-mode'. Not resetting it will cause stuttering/freezes.
 (setq gc-cons-threshold most-positive-fixnum)
 
-;; Prevent unwanted runtime compilation for gccemacs (native-comp) users;
-;; packages are compiled ahead-of-time when they are installed and site files
-;; are compiled when gccemacs is installed.
-;; REVIEW Remove after a month
-(setq comp-deferred-compilation nil
-      native-comp-deferred-compilation nil)
+;; PERF: Don't use precious startup time checking mtime on elisp bytecode.
+;;   Ensuring correctness is 'doom sync's job, not the interactive session's.
+;;   Still, stale byte-code will cause *heavy* losses in startup efficiency.
+(setq load-prefer-newer noninteractive)
+
+;; UX: Respect DEBUG envvar as an alternative to --debug-init, and to make are
+;;   startup sufficiently verbose from this point on.
+(when (getenv-internal "DEBUG")
+  (setq init-file-debug t
+        debug-on-error t))
 
 ;; Resizing the Emacs frame can be a terribly expensive part of changing the
 ;; font. By inhibiting this, we easily halve startup times with fonts that are
@@ -43,11 +47,6 @@
 
 ;; Don't ping things that look like domain names.
 (setq ffap-machine-p-known 'reject)
-
-;; In noninteractive sessions, prioritize non-byte-compiled source files to
-;; prevent the use of stale byte-code. Otherwise, it saves us a little IO time
-;; to skip the mtime checks on every *.elc file.
-(setq load-prefer-newer noninteractive)
 
 ;; Prevent the glimpse of un-styled Emacs by disabling these UI elements early.
 (setq tool-bar-mode nil
