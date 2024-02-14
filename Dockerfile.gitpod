@@ -30,7 +30,7 @@ RUN find /src/oops/guix-install.d/gpg_signing_keys -type f -exec gpg --import {}
     cp /src/oops/guix-install.d/channels.scm ~/.config/guix/channels.scm && \
     guix pull && \
     ~/.config/guix/current/bin/guix package -m /src/oops/guix-install.d/manifest.scm && \
-    guix gc'
+    rm -rf ~/.cache/guix/inferiors/ && guix gc'
 
 USER gitpod
 WORKDIR /home/gitpod
