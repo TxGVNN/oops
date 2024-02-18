@@ -18,7 +18,7 @@
 (add-hook 'emacs-startup-hook
           (lambda ()
             (setq file-name-handler-alist doom--file-name-handler-alist)))
-(defvar emacs-config-version "20240203.1318")
+(defvar emacs-config-version "20240218.0840")
 (defvar hidden-minor-modes '(whitespace-mode))
 
 (require 'package)
@@ -861,7 +861,7 @@ Why not use detached, because detached doesnt run with -A"
     "Auto update name with SUFFIX.ext."
     (interactive "p")
     (let ((filename (file-name-nondirectory (dired-get-file-for-visit)))
-          (timestamp (format-time-string "%Y%m%d%H%M%S")))
+          (timestamp (format-time-string "%Y%m%dT%H%M%S")))
       (rename-file filename (concat filename "_" timestamp) t)
       (revert-buffer)))
   (setq dired-listing-switches "-alh"))
@@ -1178,19 +1178,19 @@ Why not use detached, because detached doesnt run with -A"
   (let ((file
          (concat (file-name-as-directory temporary-file-directory)
                  (make-temp-name
-                  (format "%s_" (format-time-string "%Y%m%d_%H%M%S"))))))
+                  (format "%s_" (format-time-string "%Y%m%dT%H%M%S"))))))
     (kill-new file) (insert file)))
 (defun insert-datetime(&optional prefix)
-  "Insert YYYYmmdd-HHMM or YYYY-mm-dd_HH-MM if PREFIX set."
+  "Insert %Y%m%dT%H%M%S or %Y-%m-%dT%H:%M:%S if PREFIX set."
   (interactive "p")
   (let ((msg
          (cond
           ((= prefix 1)
-           (format-time-string "%Y%m%d-%H%M%S" (current-time) t))
+           (format-time-string "%Y%m%dT%H%M%S" (current-time) t))
           ((= prefix 2)
            (string-trim (shell-command-to-string "date --utc")))
           ((= prefix 4)
-           (format-time-string "%Y-%m-%d_%H-%M-%S" (current-time) t)))))
+           (format-time-string "%Y-%m-%dT%H:%M:%S" (current-time) t)))))
     (insert msg)))
 
 (defun linux-stat-file()
@@ -1210,7 +1210,7 @@ Why not use detached, because detached doesnt run with -A"
            ((use-region-p) (buffer-substring-no-properties (point) (mark)))
            (t (buffer-substring-no-properties (point-min) (point-max)))))
          (buffer-name (format "%s_%s" (file-name-base (buffer-name))
-                              (format-time-string "%Y%m%d_%H%M%S")))
+                              (format-time-string "%Y%m%dT%H%M%S")))
          (buffer (get-buffer-create buffer-name)))
     (with-current-buffer buffer
       (insert string)
@@ -1223,7 +1223,7 @@ Why not use detached, because detached doesnt run with -A"
          (make-temp-file
           (concat (file-name-base (buffer-name)) "_"
                   (unless (string-prefix-p "*scratch-" (buffer-name))
-                    (format-time-string "%Y%m%d-%H%M%S_")))
+                    (format-time-string "%Y%m%dT%H%M%S_")))
           nil (file-name-extension (buffer-name) t))))
     (copy-region-to-scratch (if prefix (read-file-name "Save to file: " nil filename) filename))))
 (defun find-file-rec ()
@@ -1252,7 +1252,7 @@ Why not use detached, because detached doesnt run with -A"
                                       (buffer-substring-no-properties (region-beginning) (region-end))))
      (list (region-beginning) (region-end) string)))
   (let ((bufname (car (split-string (substring command 0 (if (< (length command) 9) (length command) 9))))))
-    (async-shell-command command (format "*shell:%s:%s*" bufname (format-time-string "%Y%m%d_%H%M%S")))))
+    (async-shell-command command (format "*shell:%s:%s*" bufname (format-time-string "%Y%m%dT%H%M%S")))))
 
 (defmacro with-file-contents (file &rest body)
   "Execute BODY with FILE contents."
@@ -1448,6 +1448,10 @@ Why not use detached, because detached doesnt run with -A"
 (use-package ob-compile :ensure t :defer t
   :config (add-hook 'compilation-finish-functions #'ob-compile-save-file))
 
+(use-package denote
+  :ensure t :defer t
+  :custom (denote-directory "~/.gxt"))
+
 (use-package yaml-mode
   :ensure t :defer t
   :init (add-hook 'yaml-mode-hook #'eglot-ensure))
@@ -1457,9 +1461,9 @@ Why not use detached, because detached doesnt run with -A"
 
 ;; Go: `go install golang.org/x/tools/gopls'
 (use-package go-ts-mode
-  :hook (go-ts-mode . lsp-go-install-save-hooks)
+  :hook (go-ts-mode . eglot-go-install-save-hooks)
   :config
-  (defun lsp-go-install-save-hooks ()
+  (defun eglot-go-install-save-hooks ()
     (if (fboundp 'eglot-ensure)(eglot-ensure))
     (add-hook 'before-save-hook #'eglot-format-buffer t t))
   (defun go-print-debug-at-point()
@@ -1546,7 +1550,7 @@ Why not use detached, because detached doesnt run with -A"
   :init
   (if (treesit-ready-p 'tsx)
       (add-to-list 'auto-mode-alist '("\\.ts.*\\'" . tsx-ts-mode)))
-  :hook (typescript-ts-mode . eglot-ensure))
+  :hook (typescript-ts-base-mode . eglot-ensure))
 
 (defun js-print-debug-at-point()
   "Print debug."

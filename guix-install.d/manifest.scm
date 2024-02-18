@@ -34,6 +34,7 @@
          "emacs-corfu-terminal"
          "emacs-coterm"
          "emacs-crux"
+         "emacs-denote"
          "emacs-detached"
          "emacs-diredfl"
          "emacs-docker"
