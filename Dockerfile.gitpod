@@ -18,7 +18,7 @@ RUN useradd -l -u 33333 -G sudo -md /home/gitpod -s /bin/bash -p gitpod gitpod \
     # Remove `use_pty` option and enable passwordless sudo for users in the 'sudo' group
     && sed -i.bkp -e '/Defaults\tuse_pty/d' -e 's/%sudo\s\+ALL=(ALL\(:ALL\)\?)\s\+ALL/%sudo ALL=NOPASSWD:ALL/g' /etc/sudoers \
     # To emulate the workspace-session behavior within dazzle build env
-    && mkdir /workspace && chown -hR gitpod:gitpod /workspace
+    && mkdir /workspaces && chown -hR gitpod:gitpod /workspaces
 
 COPY ./ /src/oops
 RUN find /src/oops/guix-install.d/gpg_signing_keys -type f -exec gpg --import {} \; && \
@@ -34,8 +34,8 @@ RUN find /src/oops/guix-install.d/gpg_signing_keys -type f -exec gpg --import {}
 
 USER gitpod
 WORKDIR /home/gitpod
-ENV WORKSPACE=/workspace
-ENV PATH=/workspace/.oops/profile/bin:/src/oops/profile/bin:$PATH
+ENV WORKSPACE=/workspaces
+ENV PATH=/workspaces/.oops/profile/bin:/src/oops/profile/bin:$PATH
 
 ARG REVISION
 LABEL org.opencontainers.image.source="https://github.com/TxGVNN/oops"
