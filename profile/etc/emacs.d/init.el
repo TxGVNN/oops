@@ -18,7 +18,7 @@
 (add-hook 'emacs-startup-hook
           (lambda ()
             (setq file-name-handler-alist doom--file-name-handler-alist)))
-(defvar emacs-config-version "20240218.0840")
+(defvar emacs-config-version "20240228.0809")
 (defvar hidden-minor-modes '(whitespace-mode))
 
 (require 'package)
@@ -839,9 +839,8 @@ Why not use detached, because detached doesnt run with -A"
 (use-package dpaste :ensure t :defer t)
 (use-package gist :ensure t :defer 1)
 (use-package devdocs
-  :ensure t
-  :config
-  (global-set-key (kbd "M-s d") #'devdocs-lookup))
+  :ensure t :defer t
+  :bind ("M-s d" . #'devdocs-lookup))
 
 ;;; CHECKER: flymake(C-h .)
 (use-package flymake
@@ -887,7 +886,7 @@ Why not use detached, because detached doesnt run with -A"
   (add-hook 'eshell-mode-hook #'with-editor-export-editor)
   (add-hook 'term-exec-hook   #'with-editor-export-editor)
   (add-hook 'vterm-mode-hook  #'with-editor-export-editor))
-(use-package comint
+(use-package comint :defer t
   :custom
   (comint-input-ignoredups t)
   (comint-input-ring-size 1024))
@@ -922,7 +921,7 @@ Why not use detached, because detached doesnt run with -A"
                               #'shell-write-history-on-exit))
       (pop-to-buffer buff display-comint-buffer-action)
       buff)))
-(use-package term
+(use-package term :defer t
   :hook
   (term-mode . (lambda()
                  (let (term-escape-char) (term-set-escape-char ?\C-x))))
@@ -1604,6 +1603,8 @@ bound to C-c C-r."
   (package-installs 'keycast 'interaction-log))
 (use-package keycast :defer t
   :config (setq keycast-mode-line-insert-after 'mode-line-misc-info))
+
+(use-package x509-mode :ensure t :defer t)
 
 ;; keep personal settings not in the .emacs file
 (let ((personal-settings (locate-user-emacs-file "personal.el")))
