@@ -35,7 +35,7 @@ EOF
 
 
 ## Gitpod.io
-[![Open in Gitpod](https://gitpod.io/button/open-in-gitpod.svg)](https://gitpod.io/#https://github.com/TxGVNN/gitpod)
+[![Open in Gitpod](https://gitpod.io/button/open-in-gitpod.svg)](https://gitpod.io/#https://github.com/TxGVNN/oops)
 ### Variables
 
 | Name               | Description                                 |
