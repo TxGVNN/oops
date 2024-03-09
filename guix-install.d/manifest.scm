@@ -12,7 +12,7 @@
   (list (channel
          (name 'guix)
          (url "https://git.savannah.gnu.org/git/guix.git")
-         (commit "aae61f54ff6acf5cc0e0355dc85babf29f625660"))))
+         (commit "3621493e4cc9f83253d7f191b783fd11212c7045"))))
 
 (define inferior
   (inferior-for-channels channels))
