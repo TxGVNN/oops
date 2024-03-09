@@ -18,7 +18,7 @@
 (add-hook 'emacs-startup-hook
           (lambda ()
             (setq file-name-handler-alist doom--file-name-handler-alist)))
-(defvar emacs-config-version "20240228.0809")
+(defvar emacs-config-version "20240309.0747")
 (defvar hidden-minor-modes '(whitespace-mode))
 
 (require 'package)
@@ -245,17 +245,13 @@
   :config (setq git-link-use-commit t))
 (use-package magit-todos
   :ensure t :defer t
-  :config  ;; j-T in magit-status buffer
-  (setq magit-todos-branch-list nil
-        magit-todos-update 15)
-  (advice-add #'magit-todos--insert-todos :around
-              (lambda (orig &rest args)   ;; Disable on TRAMP
-                (unless (file-remote-p default-directory)
-                  (apply orig args))))
   :init
   (with-eval-after-load 'magit
     (let ((inhibit-message t))
-      (magit-todos-mode))))
+      (magit-todos-mode)))
+  :custom ;; j-T in magit-status buffer
+  (magit-todos-branch-list nil)
+  (magit-todos-update nil))
 
 ;;; SEARCHING: ripgrep, anzu, engine-mode
 (use-package isearch :defer t
@@ -366,6 +362,8 @@
 
 (use-package project-tasks
   :ensure t :defer t
+  :custom
+  (project-tasks-files '(".*task.*\.org$"))
   :init
   (with-eval-after-load 'embark
     (define-key embark-file-map (kbd "P") #'project-tasks-in-dir))
@@ -933,12 +931,33 @@ Why not use detached, because detached doesnt run with -A"
         ("C-c C-y" . term-paste)
         ("C-c d" . interactive-cd)))
 (use-package coterm
-  :ensure t
-  :init (coterm-mode))
+  :ensure t :defer t
+  :hook (after-init . coterm-mode))
 
 (use-package eat
-  :ensure t
+  :ensure t :defer t
   :custom (eat-line-input-ring-size 1024)
+  :init
+  (defun eat--line--save-history (&rest _)
+    "Save `eat-line' history."
+    (let ((inhibit-message t))
+      (eat--line-write-input-ring)))
+  (advice-add #'eat-line-send-input :after #'eat--line--save-history)
+
+  (defun eat-hist(buffer-name &optional histfile)
+    (let* ((eat-buffer-name buffer-name)
+           (shell-directory-name (locate-user-emacs-file "shell"))
+           (histfile (or histfile buffer-name))
+           (history-file (expand-file-name
+                          (format "%s/%s.history" shell-directory-name
+                                  (replace-regexp-in-string
+                                   "/" "~" (format "%s.%s" (abbreviate-file-name default-directory) histfile))))))
+      (with-current-buffer (eat)
+        (eat-line-mode)
+        (setq-local eat--line-input-ring-file-name history-file)
+        (ignore-errors
+          (eat-line-load-input-history-from-file eat--line-input-ring-file-name "bash")))
+      (pop-to-buffer buffer-name display-comint-buffer-action)))
   :config
   (define-key eat-line-mode-map [xterm-paste] #'xterm-paste)
   (defun eat-kill-process-confirm (orig-fun &rest args)
@@ -966,27 +985,7 @@ Why not use detached, because detached doesnt run with -A"
                  (setq index (1- index))
                  (insert (ring-ref ring index) "\n"))
                (write-region (buffer-string) nil file nil 'no-message)
-               (kill-buffer nil))))))
-  (defun eat--line--save-history (&rest _)
-    "Save `eat-line' history."
-    (let ((inhibit-message t))
-      (eat--line-write-input-ring)))
-  (advice-add #'eat-line-send-input :after #'eat--line--save-history)
-
-  (defun eat-hist(buffer-name &optional histfile)
-    (let* ((eat-buffer-name buffer-name)
-           (shell-directory-name (locate-user-emacs-file "shell"))
-           (histfile (or histfile buffer-name))
-           (history-file (expand-file-name
-                          (format "%s/%s.history" shell-directory-name
-                                  (replace-regexp-in-string
-                                   "/" "~" (format "%s.%s" (abbreviate-file-name default-directory) histfile))))))
-      (with-current-buffer (eat)
-        (eat-line-mode)
-        (setq-local eat--line-input-ring-file-name history-file)
-        (ignore-errors
-          (eat-line-load-input-history-from-file eat--line-input-ring-file-name "bash")))
-      (pop-to-buffer buffer-name display-comint-buffer-action))))
+               (kill-buffer nil)))))))
 
 (use-package xclip ;; -- don't use xsel
   :ensure t :defer t
@@ -1449,6 +1448,9 @@ Why not use detached, because detached doesnt run with -A"
 
 (use-package denote
   :ensure t :defer t
+  :bind
+  ("C-c n n" . denote-subdirectory)
+  ("C-c n o" . denote-open-or-create)
   :custom (denote-directory "~/.gxt"))
 
 (use-package yaml-mode
