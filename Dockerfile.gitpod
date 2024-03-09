@@ -8,34 +8,33 @@ RUN apt-get update && \
     man screen iproute2 && \
     rm -rf /var/lib/apt/lists/* && \
     mkdir -p /src
+
 RUN echo "en_US.UTF-8 UTF-8" >> /etc/locale.gen && locale-gen
 ENV LANG=en_US.UTF-8
 ENV LOCALE_ARCHIVE=/usr/lib/locale/locale-archive
 
-### Gitpod user ###
-# '-l': see https://docs.docker.com/develop/develop-images/dockerfile_best-practices/#user
-RUN useradd -l -u 33333 -G sudo -md /home/gitpod -s /bin/bash -p gitpod gitpod \
-    # Remove `use_pty` option and enable passwordless sudo for users in the 'sudo' group
-    && sed -i.bkp -e '/Defaults\tuse_pty/d' -e 's/%sudo\s\+ALL=(ALL\(:ALL\)\?)\s\+ALL/%sudo ALL=NOPASSWD:ALL/g' /etc/sudoers \
-    # To emulate the workspace-session behavior within dazzle build env
-    && mkdir /workspaces && chown -hR gitpod:gitpod /workspaces
+RUN groupadd --gid 1000 robot && \
+    useradd --shell /bin/bash --uid 1000 --gid 1000 --create-home robot && \
+    echo 'robot ALL=(root) NOPASSWD:ALL' > /etc/sudoers.d/robot && \
+    chmod 0440 /etc/sudoers.d/robot
 
 COPY ./ /src/oops
 RUN find /src/oops/guix-install.d/gpg_signing_keys -type f -exec gpg --import {} \; && \
     bash /src/oops/guix-install.d/guix-install.sh && \
     start-stop-daemon --user root --pidfile /tmp/guix.sock --background --start --exec /var/guix/profiles/per-user/root/current-guix/bin/guix-daemon -- --build-users-group=guixbuild --disable-chroot -c 2 -M 2 --substitute-urls="https://ci.guix.gnu.org https://bordeaux.guix.gnu.org https://txgvnn.github.io/guxti" && \
     sleep 1 && \
-    chown -R gitpod: /src/oops && \
-    sudo -H -u gitpod bash -c 'mkdir -p ~/.config/guix && \
+    chown -R robot: /src/oops && \
+    sudo -H -u robot bash -c 'mkdir -p ~/.config/guix && \
     cp /src/oops/guix-install.d/channels.scm ~/.config/guix/channels.scm && \
     guix pull && \
     ~/.config/guix/current/bin/guix package -m /src/oops/guix-install.d/manifest.scm && \
     rm -rf ~/.cache/guix/inferiors/ && guix gc'
 
-USER gitpod
-WORKDIR /home/gitpod
 ENV WORKSPACE=/workspaces
 ENV PATH=/workspaces/.oops/profile/bin:/src/oops/profile/bin:$PATH
+
+USER robot
+WORKDIR /home/robot
 
 ARG REVISION
 LABEL org.opencontainers.image.source="https://github.com/TxGVNN/oops"
