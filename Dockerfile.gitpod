@@ -43,7 +43,7 @@ COPY --from=builder /etc/profile.d/zzz-guix.sh /etc/profile.d/zzz-guix.sh
 COPY --from=builder /etc/guix /etc/guix
 COPY ./ /src/oops
 
-### Add user and configure guix
+### Add Gitpod user and configure Guix
 RUN useradd -l -u 33333 -G sudo -md /home/gitpod -s /bin/bash -p gitpod gitpod \
     # Remove `use_pty` option and enable passwordless sudo for users in the 'sudo' group
     && sed -i.bkp -e '/Defaults\tuse_pty/d' -e 's/%sudo\s\+ALL=(ALL\(:ALL\)\?)\s\+ALL/%sudo ALL=NOPASSWD:ALL/g' /etc/sudoers \
