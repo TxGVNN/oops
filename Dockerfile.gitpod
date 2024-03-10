@@ -48,9 +48,10 @@ RUN useradd -l -u 33333 -G sudo -md /home/gitpod -s /bin/bash -p gitpod gitpod \
     # Remove `use_pty` option and enable passwordless sudo for users in the 'sudo' group
     && sed -i.bkp -e '/Defaults\tuse_pty/d' -e 's/%sudo\s\+ALL=(ALL\(:ALL\)\?)\s\+ALL/%sudo ALL=NOPASSWD:ALL/g' /etc/sudoers \
     # To emulate the workspace-session behavior within dazzle build env
-    && chown -hR gitpod:gitpod /workspaces \
+    && mkdir -p /workspace \
+    && chown -hR gitpod:gitpod /workspace \
     && mv /var/guix/profiles/per-user/robot /var/guix/profiles/per-user/gitpod \
-    && mkdir /home/gitpod/.config/guix -p \
+    && mkdir -p /home/gitpod/.config/guix \
     && ln -s /var/guix/profiles/per-user/gitpod/current-guix /home/gitpod/.config/guix/current \
     && ln -s /var/guix/profiles/per-user/gitpod/guix-profile /home/gitpod/.guix-profile \
     && cp /src/oops/guix-install.d/channels.scm /home/gitpod/.config/guix/channels.scm \
@@ -62,8 +63,8 @@ WORKDIR /home/gitpod
 ENV LANG=en_US.UTF-8
 ENV LOCALE_ARCHIVE=/usr/lib/locale/locale-archive
 
-ENV WORKSPACE=/workspaces
-ENV PATH=/workspaces/.oops/profile/bin:/src/oops/profile/bin:$PATH
+ENV WORKSPACE=/workspace
+ENV PATH=/workspace/.oops/profile/bin:/src/oops/profile/bin:$PATH
 
 ARG REVISION
 LABEL org.opencontainers.image.source="https://github.com/TxGVNN/oops"
