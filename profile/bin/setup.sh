@@ -37,15 +37,6 @@ done
 . "${HOME}/.guix-profile/etc/profile"
 export GUIX_LOCPATH="${HOME}/.guix-profile/lib/locale"
 
-# run tmate
-tmate -S "${HOME}/.tmate.sock" new-session -d
-tmate -S "${HOME}/.tmate.sock" wait tmate-ready
-TMATE_SESSION=$(tmate -S "${HOME}/.tmate.sock" display -p '#{tmate_ssh}')
-
-# send session to telegram
-message="${GITPOD_WORKSPACE_CONTEXT_URL}\n\n${GITPOD_WORKSPACE_URL}\n\n${TMATE_SESSION}"
-curl "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" --data "{\"chat_id\":\"$TELEGRAM_CHAT_ID\", \"text\":\"$message\"}" -H 'content-type: application/json'
-
 # Direnv
 mkdir -p ~/.config/direnv
 printf '%s\n%s' '[whitelist]' 'prefix = [ "'$WORKSPACE'" ]' > ~/.config/direnv/config.toml
