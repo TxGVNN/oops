@@ -4,24 +4,9 @@
 ;; capture the channels being used, as returned by "guix describe".
 ;; See the "Replicating Guix" section in the manual.
 
-(use-modules (guix inferior)
-             (guix channels)
-             (srfi srfi-1))   ;; for 'first'
-
-(define channels
-  (list (channel
-         (name 'guix)
-         (url "https://git.savannah.gnu.org/git/guix.git")
-         (commit "aae61f54ff6acf5cc0e0355dc85babf29f625660"))))
-
-(define inferior
-  (inferior-for-channels channels))
-
-(packages->manifest
- (append
-  (list (first (lookup-inferior-packages inferior "emacs-no-x")))
-  (specifications->packages
-   (list "emacs-ace-window"
+(specifications->manifest
+   (list "emacs-no-x"
+         "emacs-ace-window"
          "emacs-ansible-doc"
          "emacs-anzu"
          "emacs-avy"
@@ -121,4 +106,4 @@
          "ripgrep"
          "rsync"
          "socat"
-         "tmate"))))
+         "tmate"))
