@@ -110,10 +110,6 @@ if ! shopt -oq posix; then
     fi
 fi
 
-[ "$GTX_DIR" ] || GTX_DIR="${PWD}/../"
-if ! echo "$PATH" | grep -q "$GTX_DIR" > /dev/null 2>&1; then
-    export PATH=$PATH:$GTX_DIR/bin
-fi
 #PS1
 color='32'
 [ "$(id -u)" -ne 0 ] || color='31'
