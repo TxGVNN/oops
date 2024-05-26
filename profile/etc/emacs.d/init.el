@@ -18,7 +18,7 @@
 (add-hook 'emacs-startup-hook
           (lambda ()
             (setq file-name-handler-alist doom--file-name-handler-alist)))
-(defvar emacs-config-version "20240416.1730")
+(defvar emacs-config-version "20240526.0155")
 (defvar hidden-minor-modes '(whitespace-mode))
 
 (require 'package)
@@ -90,7 +90,6 @@
 (use-package consult
   :ensure t :defer t
   :bind
-  ("M-y" . consult-yank-pop)
   ("M-g g" . consult-goto-line)
   ("M-g M-g" . consult-goto-line)
   ("M-g i" . consult-imenu)
@@ -866,16 +865,18 @@ Why not use detached, because detached doesnt run with -A"
 
 ;;; DIRED
 (use-package dired :defer t
+  :custom
+  (dired-listing-switches "-alht")
+  :bind
+  (:map dired-mode-map ("E" . dired-ediff-files))
   :config
-  (define-key dired-mode-map (kbd "E") #'dired-ediff-files)
   (defun dired-auto-update-name (&optional suffix)
     "Auto update name with SUFFIX.ext."
     (interactive "p")
     (let ((filename (file-name-nondirectory (dired-get-file-for-visit)))
           (timestamp (format-time-string "%Y%m%dT%H%M%S")))
       (rename-file filename (concat filename "_" timestamp) t)
-      (revert-buffer)))
-  (setq dired-listing-switches "-alh"))
+      (revert-buffer))))
 (use-package diredfl
   :ensure t :defer t
   :init (add-hook 'dired-mode-hook 'diredfl-mode))
@@ -1081,10 +1082,15 @@ Why not use detached, because detached doesnt run with -A"
         gnus-sum-thread-tree-single-leaf     "└─> "))
 
 ;;; THEMES
-(use-package modus-vivendi-theme
-  :demand
-  :init (load-theme 'modus-vivendi t))
-
+(use-package theme-buffet
+  :ensure t
+  :custom
+  (theme-buffet-end-user '(:all (modus-vivendi misterioso tsdh-dark tango-dark)))
+  (theme-buffet-menu 'end-user)
+  :config
+  (defun theme-buffet--get-period-keyword() :all)
+  (theme-buffet--load-random)
+  (theme-buffet-timer-mins 15))
 ;;; MODELINE
 (setq mode-line-position
       '((line-number-mode ("(%l" (column-number-mode ",%c")))
@@ -1190,20 +1196,22 @@ Why not use detached, because detached doesnt run with -A"
                  (make-temp-name
                   (format "%s_" (format-time-string "%Y%m%dT%H%M%S"))))))
     (kill-new file) (insert file)))
-(defun insert-datetime(&optional prefix)
-  "Insert %Y%m%dT%H%M%S or %Y-%m-%dT%H:%M:%S if PREFIX set."
-  (interactive "p")
-  (let ((msg (cond
-              ((= prefix 1)
-               (format-time-string "%Y%m%dT%H%M%S" (current-time) t))
-              ((= prefix 2)
-               (string-trim (shell-command-to-string "date +%s")))
-              ((= prefix 3)
-               (string-trim (shell-command-to-string "date --utc")))
-              ((= prefix 4)
-               (format-time-string "%Y-%m-%dT%H:%M:%S" (current-time) t)))))
-    (insert msg)))
-
+(defun insert-datetime()
+  "Insert datetime."
+  (interactive)
+  (let* ((time (org-read-date t 'totime))
+         ;; Build all the formats
+         (formats (list
+                   (format-time-string "%s" time t)
+                   (format-time-string "%Y%m%dT%H%M%S" time t)
+                   (format-time-string "%Y-%m-%dT%H:%M:%S" time t)
+                   (format-time-string "%Y-%m-%d %H:%M:%S" time t)
+                   (format-time-string "%Y-%m-%d %H:%M:%S %z" time t)
+                   (format-time-string "%Y-%m-%d %H:%M:%S %z" time nil)
+                   (format-time-string "%Y/%m/%d" time nil) (format-time-string "%Y-%m-%d" time nil)
+                   (format-time-string "%d/%m/%Y" time nil) (format-time-string "%d-%m-%Y" time nil)))
+         (format (completing-read "Insert date: " formats)))
+    (insert format)))
 (defun linux-stat-file()
   "Run stat command in linux in current file."
   (interactive)
@@ -1437,8 +1445,8 @@ Why not use detached, because detached doesnt run with -A"
   :config
   (defun org-open-at-point-of-babel-call()
     (let* ((context (org-element-lineage (org-element-context) '(babel-call) t))
-	       (type (org-element-type context))
-	       (value (org-element-property :value context)))
+           (type (org-element-type context))
+           (value (org-element-property :value context)))
       (if (eq type 'babel-call)
           ;; remove '()' string in value then to assign to project-task
           (let ((project-task (replace-regexp-in-string "()" "" value)))
@@ -1476,6 +1484,10 @@ Why not use detached, because detached doesnt run with -A"
   :bind
   ("C-c n n" . denote-subdirectory)
   ("C-c n o" . denote-open-or-create)
+  :config
+  (with-eval-after-load 'org
+    (setq org-link-parameters ;; I want to use built-in link by filepath instead.
+          (delq (assoc "denote" org-link-parameters) org-link-parameters)))
   :custom (denote-directory "~/.gxt"))
 
 (use-package yaml-mode
