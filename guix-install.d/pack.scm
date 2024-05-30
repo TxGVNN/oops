@@ -86,6 +86,7 @@
          "tree-sitter-cpp"
          "tree-sitter-css"
          "tree-sitter-go"
+         "tree-sitter-gomod"
          "tree-sitter-haskell"
          "tree-sitter-html"
          "tree-sitter-java"
