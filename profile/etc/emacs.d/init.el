@@ -18,7 +18,7 @@
 (add-hook 'emacs-startup-hook
           (lambda ()
             (setq file-name-handler-alist doom--file-name-handler-alist)))
-(defvar emacs-config-version "20240526.0155")
+(defvar emacs-config-version "20240624.0939")
 (defvar hidden-minor-modes '(whitespace-mode))
 
 (require 'package)
@@ -848,7 +848,12 @@ Why not use detached, because detached doesnt run with -A"
    ("C" . project-detached-compile)))
 (use-package 0x0 :ensure t :defer t)
 (use-package dpaste :ensure t :defer t)
-(use-package gist :ensure t :defer t)
+(use-package gist
+  :ensure t :defer t
+  :config
+  (defun gist-ask-for-description-maybe ()
+    "Override to return the current file name."
+    (file-name-nondirectory (buffer-file-name))))
 (use-package devdocs
   :ensure t :defer t
   :bind ("M-s d" . #'devdocs-lookup))
@@ -1467,12 +1472,12 @@ Why not use detached, because detached doesnt run with -A"
         org-src-tab-acts-natively t
         org-edit-src-content-indentation 0
         org-log-done 'time
-        org-todo-keyword-faces (quote (("BLOCKED" . error) ("WIP" . warning)
-                                       ("WONTFIX" . (:foreground "gray" :weight bold))))
+        org-todo-keyword-faces (quote (("KILL" . error) ("STRT" . warning)
+                                       ("HOLD" . warning) ("WAIT" . warning)))
         org-todo-keywords
         (quote
-         ((sequence "TODO(t)" "|" "WONTFIX(W)" "DONE(d)")
-          (sequence "WIP(w)" "BLOCKED(b)" "|" "REJECTED(r)")))))
+         ((sequence "TODO(t)" "|" "DONE(d)")
+          (sequence "IDEA(i)" "STRT(s)" "HOLD(h)" "WAIT(w)" "|" "KILL(k)")))))
 (use-package org-bullets
   :ensure t :defer t
   :init (add-hook 'org-mode-hook #'org-bullets-mode))
@@ -1499,6 +1504,8 @@ Why not use detached, because detached doesnt run with -A"
 
 ;; Go: `go install golang.org/x/tools/gopls'
 (use-package go-ts-mode
+  :init
+  (add-to-list 'auto-mode-alist '("\\.go\\'" . go-ts-mode))
   :hook (go-ts-mode . eglot-go-install-save-hooks)
   :config
   (defun eglot-go-install-save-hooks ()
