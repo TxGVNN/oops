@@ -295,6 +295,7 @@
 (use-package project :defer t
   :ensure t
   :custom
+  (project-vc-extra-root-markers '(".pc"))
   (project-switch-use-entire-map t)
   (project-compilation-buffer-name-function 'project-prefixed-buffer-name)
   (project-switch-commands
@@ -323,11 +324,14 @@
            (default-directory (project-root pr))
            (dirs (list default-directory)))
       (project-find-file-in (thing-at-point 'filename) dirs pr include-all)))
+  (defun project-prefixed-buffer-name-full (mode)
+    (concat "*" (downcase mode) ":" default-directory "*"))
+  (setq project-compilation-buffer-name-function 'project-prefixed-buffer-name-full)
   (defun project-eat ()
     "Project eat with history"
     (interactive)
     (let* ((default-directory (project-root (project-current t)))
-           (project-shell-name (project-prefixed-buffer-name "eat"))
+           (project-shell-name (funcall project-compilation-buffer-name-function "eat"))
            (shell-buffer (get-buffer project-shell-name)))
       (if current-prefix-arg
           (eat-hist (generate-new-buffer-name project-shell-name)
@@ -662,7 +666,6 @@
 (use-package eglot :defer t
   :init
   (add-hook 'python-ts-mode-hook #'eglot-ensure)
-  (add-hook 'bash-ts-mode-hook #'eglot-ensure)
   (add-hook 'go-ts-mode-hook #'eglot-ensure)
   (add-hook 'c-ts-mode-hook #'eglot-ensure)
   (add-hook 'cpp-ts-mode-hook #'eglot-ensure)
@@ -853,7 +856,7 @@ Why not use detached, because detached doesnt run with -A"
   :config
   (defun gist-ask-for-description-maybe ()
     "Override to return the current file name."
-    (file-name-nondirectory (buffer-file-name))))
+    (file-name-nondirectory (or (buffer-file-name) (buffer-name)))))
 (use-package devdocs
   :ensure t :defer t
   :bind ("M-s d" . #'devdocs-lookup))
