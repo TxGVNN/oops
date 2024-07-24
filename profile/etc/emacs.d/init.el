@@ -18,7 +18,7 @@
 (add-hook 'emacs-startup-hook
           (lambda ()
             (setq file-name-handler-alist doom--file-name-handler-alist)))
-(defvar emacs-config-version "20240624.0939")
+(defvar emacs-config-version "20240724.0156")
 (defvar hidden-minor-modes '(whitespace-mode))
 
 (require 'package)
@@ -1471,18 +1471,25 @@ Why not use detached, because detached doesnt run with -A"
         org-hide-leading-stars t
         org-src-tab-acts-natively t
         org-edit-src-content-indentation 0
+        org-tags-match-list-sublevels 'indented
         org-log-done 'time
-        org-todo-keyword-faces (quote (("KILL" . error) ("STRT" . warning)
+        org-todo-keyword-faces (quote (("KILL" . error) ("STRT" . highlight)
                                        ("HOLD" . warning) ("WAIT" . warning)))
         org-todo-keywords
         (quote
          ((sequence "TODO(t)" "|" "DONE(d)")
           (sequence "IDEA(i)" "STRT(s)" "HOLD(h)" "WAIT(w)" "|" "KILL(k)")))))
+
 (use-package org-bullets
   :ensure t :defer t
   :init (add-hook 'org-mode-hook #'org-bullets-mode))
-(use-package ob-compile :ensure t :defer t
-  :config (add-hook 'compilation-finish-functions #'ob-compile-save-file))
+
+(use-package org-transclusion
+  :ensure t :defer t
+  :bind
+  ("C-c n t" . org-transclusion-add)
+  :custom-face
+  (org-transclusion ((t (:inherit org-meta-line)))))
 
 (use-package denote
   :ensure t :defer t
@@ -1494,6 +1501,10 @@ Why not use detached, because detached doesnt run with -A"
     (setq org-link-parameters ;; I want to use built-in link by filepath instead.
           (delq (assoc "denote" org-link-parameters) org-link-parameters)))
   :custom (denote-directory "~/.gxt"))
+
+
+(use-package ob-compile :ensure t :defer t
+  :config (add-hook 'compilation-finish-functions #'ob-compile-save-file))
 
 (use-package yaml-mode
   :ensure t :defer t
