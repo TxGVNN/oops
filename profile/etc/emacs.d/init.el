@@ -18,7 +18,7 @@
 (add-hook 'emacs-startup-hook
           (lambda ()
             (setq file-name-handler-alist doom--file-name-handler-alist)))
-(defvar emacs-config-version "20240724.0156")
+(defvar emacs-config-version "20240727.0354")
 (defvar hidden-minor-modes '(whitespace-mode))
 
 (require 'package)
@@ -1019,6 +1019,7 @@ Why not use detached, because detached doesnt run with -A"
 (use-package tramp :defer t
   :custom
   (tramp-default-method "ssh")
+  (tramp-histfile-override nil)
   (tramp-allow-unsafe-temporary-files t))
 (use-package ediff
   :ensure nil :defer t
