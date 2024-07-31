@@ -17,7 +17,6 @@
          "emacs-consult-yasnippet"
          "emacs-corfu"
          "emacs-corfu-terminal"
-         "emacs-coterm"
          "emacs-crux"
          "emacs-denote"
          "emacs-detached"

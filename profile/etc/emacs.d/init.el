@@ -18,7 +18,7 @@
 (add-hook 'emacs-startup-hook
           (lambda ()
             (setq file-name-handler-alist doom--file-name-handler-alist)))
-(defvar emacs-config-version "20240727.0354")
+(defvar emacs-config-version "20240731.0837")
 (defvar hidden-minor-modes '(whitespace-mode))
 
 (require 'package)
@@ -951,9 +951,6 @@ Why not use detached, because detached doesnt run with -A"
         ("M-x"  . execute-extended-command)
         ("C-c C-y" . term-paste)
         ("C-c d" . interactive-cd)))
-(use-package coterm
-  :ensure t :defer t
-  :hook (after-init . coterm-mode))
 
 (use-package eat
   :ensure t :defer t
