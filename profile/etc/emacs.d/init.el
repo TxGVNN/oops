@@ -18,7 +18,7 @@
 (add-hook 'emacs-startup-hook
           (lambda ()
             (setq file-name-handler-alist doom--file-name-handler-alist)))
-(defvar emacs-config-version "20240731.0837")
+(defvar emacs-config-version "20240801.0035")
 (defvar hidden-minor-modes '(whitespace-mode))
 
 (require 'package)
@@ -144,7 +144,7 @@
   (defun embark-chroot (dir &optional prefix)
     "Run CMD in directory DIR."
     (interactive "DIn directory:\nP")
-    (let ((default-directory (file-name-directory dir))
+    (let ((default-directory (replace-regexp-in-string "[^/]*$" "" dir))
           (embark-quit-after-action t)
           (action (embark--prompt
                    (mapcar #'funcall embark-indicators)
