@@ -18,7 +18,7 @@
 (add-hook 'emacs-startup-hook
           (lambda ()
             (setq file-name-handler-alist doom--file-name-handler-alist)))
-(defvar emacs-config-version "20240801.0035")
+(defvar emacs-config-version "20240927.1551")
 (defvar hidden-minor-modes '(whitespace-mode))
 
 (require 'package)
@@ -168,22 +168,22 @@
   ;; region
   (add-to-list 'embark-target-injection-hooks
                '(async-shell-from-region embark--allow-edit))
-  ;; term
-  (defun embark-run-term(dir)
+  ;; terminal
+  (defun embark-run-term(&optional dir)
     "Create or visit a ansi-term buffer."
     (interactive "D")
-    (let ((default-directory (file-name-directory dir)))
-      (crux-visit-term-buffer t)))
-  (defun embark-run-shell(dir)
+    (let ((default-directory (if dir (file-name-directory dir) default-directory)))
+      (crux-visit-term-buffer)))
+  (defun embark-run-shell(&optional dir)
     "Create or visit a shell buffer."
     (interactive "D")
-    (let ((default-directory (file-name-directory dir)))
-      (crux-visit-shell-buffer t)))
-  (defun embark-run-eat(dir)
+    (let ((default-directory (if dir (file-name-directory dir) default-directory)))
+      (crux-visit-shell-buffer)))
+  (defun embark-run-eat(&optional dir)
     "Create or visit a eat buffer."
     (interactive "D")
-    (let ((default-directory (file-name-directory dir)))
-      (crux-visit-eat-buffer t)))
+    (let ((default-directory (if dir (file-name-directory dir) default-directory)))
+      (crux-visit-eat-buffer)))
   (defun make-directory-and-go(dir)
     (interactive "D")
     (make-directory dir)
@@ -298,16 +298,6 @@
   (project-vc-extra-root-markers '(".pc"))
   (project-switch-use-entire-map t)
   (project-compilation-buffer-name-function 'project-prefixed-buffer-name)
-  (project-switch-commands
-   '((project-find-file "file")
-     (magit-project-status "git")
-     (project-consult-ripgrep "rg")
-     (project-consult-grep "grep")
-     (project-compile "compile")
-     (project-switch-to-buffer "buf")
-     (project-eat "eat")
-     (project-jump-persp "jump")
-     (embark-on-project "embark")))
   :bind
   (:map project-prefix-map
         ("j" . project-jump-persp)
@@ -383,7 +373,8 @@
           (setq task-name file)
         (find-file file))
       (org-babel-goto-named-src-block task-name)))
-  (add-to-list 'marginalia-prompt-categories '("select task" . project-task))
+  (with-eval-after-load 'marginalia
+    (add-to-list 'marginalia-prompt-categories '("select task" . project-task)))
   (with-eval-after-load 'embark
     (defvar-keymap embark-project-task-actions
       :doc "Keymap for actions for project-task (when mentioned by name)."
@@ -664,11 +655,6 @@
   (add-hook 'eglot-managed-mode-hook (lambda () (add-hook 'xref-backend-functions 'dumb-jump-xref-activate t t)))
   (add-hook 'xref-backend-functions #'dumb-jump-xref-activate))
 (use-package eglot :defer t
-  :init
-  (add-hook 'python-ts-mode-hook #'eglot-ensure)
-  (add-hook 'go-ts-mode-hook #'eglot-ensure)
-  (add-hook 'c-ts-mode-hook #'eglot-ensure)
-  (add-hook 'cpp-ts-mode-hook #'eglot-ensure)
   :commands eglot-ensure
   :config
   (setq eglot-disable-on-tramp t)
@@ -761,15 +747,6 @@
   (global-set-key [remap describe-macro] 'helpful-macro)
   (global-set-key [remap describe-variable] 'helpful-variable)
   (global-set-key [remap describe-symbol] 'helpful-symbol))
-(use-package shell-command+
-  :ensure t :defer t
-  :config
-  (setq shell-command+-features
-        (list #'shell-command+-command-substitution
-              #'shell-command+-redirect-output
-              #'shell-command+-implicit-cd)
-        shell-command+-prompt "Shell command `%s': ")
-  :init (global-set-key (kbd "M-!") #'shell-command+))
 (use-package eev
   :ensure t :defer 1
   :config (require 'eev-load)
@@ -962,7 +939,9 @@ Why not use detached, because detached doesnt run with -A"
       (eat--line-write-input-ring)))
   (advice-add #'eat-line-send-input :after #'eat--line--save-history)
 
-  (defun eat-hist(buffer-name &optional histfile)
+  (defun eat-hist(&optional buffer-name histfile)
+    "Create a eat BUFFER-NAME (eat-line-mode) and set `eat--line-input-ring-file-name' is HISTFILE."
+    (interactive (list "*eat*" nil))
     (let* ((eat-buffer-name buffer-name)
            (shell-directory-name (locate-user-emacs-file "shell"))
            (histfile (or histfile buffer-name))
@@ -1291,6 +1270,24 @@ Why not use detached, because detached doesnt run with -A"
        (make-directory (file-name-directory ,file) t))
      (with-temp-file ,file
        (insert ,content))))
+(defun ~eat-sudo ()
+  (interactive)
+  (let ((default-directory "/sudo::~/"))
+    (eat-hist "*sudo*")))
+(transient-define-prefix ~fast-and-furious()
+  "Some fast functions to run"
+  ["Actions"
+   ("s" "eat" eat-hist)
+   ("S" "eat-sudo" ~eat-sudo)])
+(defun ~import-txgvnn-gpg-key()
+  (interactive)
+  (url-retrieve "https://github.com/txgvnn.gpg"
+                (lambda (arg)
+                  (cond ((equal :error (car arg)) (message arg))
+                        (t (with-current-buffer
+                               (current-buffer) (goto-char (point-min)) (re-search-forward "^$")
+                               (epa-import-keys-region (+ 1 (point)) (point-max))))))))
+
 
 (global-set-key (kbd "M-D") 'kill-whole-line)
 (global-set-key (kbd "M-w") 'my-kill-ring-save)
@@ -1318,6 +1315,7 @@ Why not use detached, because detached doesnt run with -A"
 (global-set-key (kbd "C-x / T") 'tabify)
 (global-set-key (kbd "C-x / l") 'toggle-truncate-lines)
 (global-set-key (kbd "C-x / f") 'flush-lines)
+(global-set-key (kbd "C-x O") #'~fast-and-furious)
 (global-set-key (kbd "C-x 2") 'split-window-vertically-last-buffer)
 (global-set-key (kbd "C-x 3") 'split-window-horizontally-last-buffer)
 (global-set-key (kbd "C-x 4 C-v") 'scroll-other-window)
@@ -1474,12 +1472,17 @@ Why not use detached, because detached doesnt run with -A"
         org-edit-src-content-indentation 0
         org-tags-match-list-sublevels 'indented
         org-log-done 'time
+        org-agenda-prefix-format
+        (quote ((agenda . " %i %-12:c%?-12t%-5e% s")
+                (todo . " %i %-12:c %-5e")
+                (tags . " %i %-12:c %-5e")
+                (search . " %i %-12:c %-5e")))
         org-todo-keyword-faces (quote (("KILL" . error) ("STRT" . highlight)
-                                       ("HOLD" . warning) ("WAIT" . warning)))
+                                       ("PAUS" . org-warning) ("REVIEW" . warning) ("AWPY" . success)))
         org-todo-keywords
         (quote
          ((sequence "TODO(t)" "|" "DONE(d)")
-          (sequence "IDEA(i)" "STRT(s)" "HOLD(h)" "WAIT(w)" "|" "KILL(k)")))))
+          (sequence "IDEA(i)" "STRT(s)" "PAUS(p)" "REVIEW(r)" "AWPY(a)" "|" "KILL(k)")))))
 
 (use-package org-bullets
   :ensure t :defer t
@@ -1497,6 +1500,10 @@ Why not use detached, because detached doesnt run with -A"
   :bind
   ("C-c n n" . denote-subdirectory)
   ("C-c n o" . denote-open-or-create)
+  :init
+  (with-eval-after-load 'org
+    (setq org-link-parameters ;; I want to use built-in link by filepath instead.
+          (delq (assoc "denote" org-link-parameters) org-link-parameters)))
   :config
   (with-eval-after-load 'org
     (setq org-link-parameters ;; I want to use built-in link by filepath instead.
@@ -1507,22 +1514,20 @@ Why not use detached, because detached doesnt run with -A"
 (use-package ob-compile :ensure t :defer t
   :config (add-hook 'compilation-finish-functions #'ob-compile-save-file))
 
-(use-package yaml-mode
-  :ensure t :defer t
-  :init (add-hook 'yaml-mode-hook #'eglot-ensure))
+(use-package yaml-mode :ensure t :defer t)
 
-(use-package markdown-mode
-  :ensure t :defer t)
+(use-package markdown-mode :ensure t :defer t)
 
 ;; Go: `go install golang.org/x/tools/gopls'
 (use-package go-ts-mode
   :init
   (add-to-list 'auto-mode-alist '("\\.go\\'" . go-ts-mode))
-  :hook (go-ts-mode . eglot-go-install-save-hooks)
   :config
-  (defun eglot-go-install-save-hooks ()
-    (if (fboundp 'eglot-ensure)(eglot-ensure))
-    (add-hook 'before-save-hook #'eglot-format-buffer t t))
+  (defun go-enable-eglot()
+    (interactive)
+    (when (fboundp 'eglot-ensure)
+      (add-hook 'go-ts-mode-hook #'eglot-ensure)
+      (add-hook 'before-save-hook #'eglot-format-buffer t t)))
   (defun go-print-debug-at-point()
     "Print debug."
     (interactive)
@@ -1535,7 +1540,6 @@ Why not use detached, because detached doesnt run with -A"
 
 ;; Python: `pip install python-lsp-server[all]'
 (use-package python
-  :hook (python-ts-mode . eglot-ensure)
   :config
   (setq python-indent-guess-indent-offset-verbose nil)
   (when (executable-find "python3")
@@ -1568,9 +1572,7 @@ Why not use detached, because detached doesnt run with -A"
                       var var var)))))
 
 ;; Erlang
-(use-package erlang
-  :ensure t :defer t
-  :hook (erlang-mode . eglot-ensure))
+(use-package erlang :ensure t :defer t)
 
 ;; Terraform
 (use-package terraform-mode :ensure t :defer t)
@@ -1588,8 +1590,8 @@ Why not use detached, because detached doesnt run with -A"
   :config (define-key ansible-doc-mode-map (kbd "M-?") #'ansible-doc))
 
 ;; Java - https://download.eclipse.org/jdtls/snapshots/jdt-language-server-latest.tar.gz"
-(use-package java-ts-mode
-  :hook (java-ts-mode . eglot-ensure))
+;; (use-package java-ts-mode
+;;   :hook (java-ts-mode . eglot-ensure))
 
 (use-package lua-mode
   :ensure t :defer t)
@@ -1607,18 +1609,17 @@ Why not use detached, because detached doesnt run with -A"
   :init
   (if (treesit-ready-p 'tsx)
       (add-to-list 'auto-mode-alist '("\\.ts.*\\'" . tsx-ts-mode)))
-  :hook (typescript-ts-base-mode . eglot-ensure))
-
-(defun js-print-debug-at-point()
-  "Print debug."
-  (interactive)
-  (let ((var (substring-no-properties (thing-at-point 'symbol))))
-    (move-end-of-line nil)
-    (newline-and-indent)
-    (insert (format "console.log(\"D: %s@%s %s: \", %s);"
-                    (file-name-nondirectory (buffer-file-name))
-                    (substring (md5 (format "%s%s" (emacs-pid) (current-time))) 0 4)
-                    var var))))
+  :config
+  (defun js-print-debug-at-point()
+    "Print debug."
+    (interactive)
+    (let ((var (substring-no-properties (thing-at-point 'symbol))))
+      (move-end-of-line nil)
+      (newline-and-indent)
+      (insert (format "console.log(\"D: %s@%s %s: \", %s);"
+                      (file-name-nondirectory (buffer-file-name))
+                      (substring (md5 (format "%s%s" (emacs-pid) (current-time))) 0 4)
+                      var var)))))
 
 (defun develop-gitlab-ci()
   "Gitlab-CI development."
