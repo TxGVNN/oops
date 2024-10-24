@@ -51,6 +51,7 @@ RUN useradd -l -u 33333 -G sudo -md /home/gitpod -s /bin/bash -p gitpod gitpod \
     && mkdir -p /workspace \
     && chown -hR gitpod:gitpod /workspace \
     && mv /var/guix/profiles/per-user/robot /var/guix/profiles/per-user/gitpod \
+    && chown gitpod:gitpod -R /var/guix/profiles/per-user/gitpod
     && mkdir -p /home/gitpod/.config/guix \
     && ln -s /var/guix/profiles/per-user/gitpod/current-guix /home/gitpod/.config/guix/current \
     && ln -s /var/guix/profiles/per-user/gitpod/guix-profile /home/gitpod/.guix-profile \

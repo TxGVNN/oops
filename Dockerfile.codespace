@@ -50,6 +50,7 @@ RUN groupadd --gid 1000 vscode \
     && chmod 0440 /etc/sudoers.d/vscode \
     && chown -hR vscode:vscode /workspaces \
     && mv /var/guix/profiles/per-user/robot /var/guix/profiles/per-user/vscode \
+    && chown vscode:vscode -R /var/guix/profiles/per-user/vscode
     && mkdir /home/vscode/.config/guix -p \
     && ln -s /var/guix/profiles/per-user/vscode/current-guix /home/vscode/.config/guix/current \
     && ln -s /var/guix/profiles/per-user/vscode/guix-profile /home/vscode/.guix-profile \
