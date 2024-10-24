@@ -18,7 +18,7 @@
 (add-hook 'emacs-startup-hook
           (lambda ()
             (setq file-name-handler-alist doom--file-name-handler-alist)))
-(defvar emacs-config-version "20240927.1551")
+(defvar emacs-config-version "20241024.0411")
 (defvar hidden-minor-modes '(whitespace-mode))
 
 (require 'package)
@@ -942,9 +942,9 @@ Why not use detached, because detached doesnt run with -A"
   (defun eat-hist(&optional buffer-name histfile)
     "Create a eat BUFFER-NAME (eat-line-mode) and set `eat--line-input-ring-file-name' is HISTFILE."
     (interactive (list "*eat*" nil))
-    (let* ((eat-buffer-name buffer-name)
+    (let* ((eat-buffer-name (or buffer-name (format "*eat:%s*" default-directory)))
            (shell-directory-name (locate-user-emacs-file "shell"))
-           (histfile (or histfile buffer-name))
+           (histfile (or histfile eat-buffer-name))
            (history-file (expand-file-name
                           (format "%s/%s.history" shell-directory-name
                                   (replace-regexp-in-string
@@ -954,7 +954,7 @@ Why not use detached, because detached doesnt run with -A"
         (setq-local eat--line-input-ring-file-name history-file)
         (ignore-errors
           (eat-line-load-input-history-from-file eat--line-input-ring-file-name "bash")))
-      (pop-to-buffer buffer-name display-comint-buffer-action)))
+      (pop-to-buffer eat-buffer-name display-comint-buffer-action)))
   :config
   (define-key eat-line-mode-map [xterm-paste] #'xterm-paste)
   (defun eat-kill-process-confirm (orig-fun &rest args)
@@ -994,6 +994,7 @@ Why not use detached, because detached doesnt run with -A"
 ;; BUILTIN
 (use-package tramp :defer t
   :custom
+  (tramp-show-ad-hoc-proxies t)
   (tramp-default-method "ssh")
   (tramp-histfile-override nil)
   (tramp-allow-unsafe-temporary-files t))
@@ -1354,6 +1355,7 @@ Why not use detached, because detached doesnt run with -A"
  '(enable-local-variables :all)
  '(enable-recursive-minibuffers t)
  '(ffap-machine-p-known 'reject t)
+ '(find-file-existing-other-name nil)
  '(global-hl-line-mode t)
  '(indent-tabs-mode nil)
  '(inhibit-default-init nil)
