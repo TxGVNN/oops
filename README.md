@@ -27,6 +27,9 @@ export GUIX_LOCPATH=\${GUIX_PROFILE}/lib/locale
 if type -p direnv &>/dev/null; then
     eval "\$(direnv hook bash)"
 fi
+if [ -e /etc/ssl/certs/ca-certificates.crt ]; then
+    export SSL_CERT_FILE=/etc/ssl/certs/ca-certificates.crt
+fi
 EOF
 
 ```
