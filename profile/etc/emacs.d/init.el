@@ -18,7 +18,7 @@
 (add-hook 'emacs-startup-hook
           (lambda ()
             (setq file-name-handler-alist doom--file-name-handler-alist)))
-(defvar emacs-config-version "20241024.0411")
+(defvar emacs-config-version "20241211.0406")
 (defvar hidden-minor-modes '(whitespace-mode))
 
 (require 'package)
@@ -1496,6 +1496,10 @@ Why not use detached, because detached doesnt run with -A"
   ("C-c n t" . org-transclusion-add)
   :custom-face
   (org-transclusion ((t (:inherit org-meta-line)))))
+
+(use-package org-tanglesync
+  :ensure t :defer t
+  :commands (org-tanglesync-process-buffer-interactive))
 
 (use-package denote
   :ensure t :defer t

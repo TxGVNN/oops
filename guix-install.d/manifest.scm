@@ -58,6 +58,7 @@
          "emacs-orderless"
          "emacs-org-alert"
          "emacs-org-bullets"
+         "emacs-org-tanglesync"
          "emacs-org-transclusion"
          "emacs-pcmpl-args"
          "emacs-perspective"
