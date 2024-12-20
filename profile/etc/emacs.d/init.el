@@ -18,7 +18,7 @@
 (add-hook 'emacs-startup-hook
           (lambda ()
             (setq file-name-handler-alist doom--file-name-handler-alist)))
-(defvar emacs-config-version "20241211.0406")
+(defvar emacs-config-version "20241220.1030")
 (defvar hidden-minor-modes '(whitespace-mode))
 
 (require 'package)
@@ -221,20 +221,20 @@
   (add-hook 'magit-process-find-password-functions
             'magit-process-password-auth-source)
   (defun magit-find-file-at-path (project rev path)
-    (let ((default-directory project)
-          (line (string-to-number (car (last (split-string path "#L"))))))
-      (with-current-buffer
-          (magit-find-file rev (car (split-string path "#")))
-        (goto-char (point-min))
-        (forward-line (1- line)))))
+    (let* ((default-directory project)
+           (parts (split-string path "#L"))
+           (file-path (car (split-string path "#")))
+           (line-number (string-to-number (car (last parts)))))
+      (with-current-buffer (magit-find-file rev file-path)
+        (goto-line line-number))))
   (defun magit-link-at-point ()
     (interactive)
-    (let* ((link (magit-with-toplevel
-                   (list (abbreviate-file-name default-directory)
-                         (magit-rev-parse "--short" "HEAD")
-                         (magit-file-relative-name))))
+    (let* ((dir (magit-with-toplevel (abbreviate-file-name default-directory)))
+           (commit (magit-with-toplevel (magit-rev-parse "--short" "HEAD")))
+           (file (magit-with-toplevel (magit-file-relative-name)))
+           (line-num (line-number-at-pos))
            (magit-link (format "(magit-find-file-at-path \"%s\" \"%s\" \"%s#L%s\")"
-                               (car link) (cadr link) (caddr link) (line-number-at-pos))))
+                               dir commit file line-num)))
       (kill-new magit-link)
       (message magit-link)))
   :bind
@@ -357,22 +357,13 @@
   :ensure t :defer t
   :custom
   (project-tasks-separator ":")
-  (project-tasks-files '(".*task.*\.org$"))
+  (project-tasks-get-tasks-files-func #'project-tasks--get-task-files-by-find)
+  (project-tasks-files '(".*\.org$"))
   :init
   (with-eval-after-load 'embark
     (define-key embark-file-map (kbd "P") #'project-tasks-in-dir))
   :bind (:map project-prefix-map ("P" . project-tasks))
   :config
-  (defun project-tasks-goto-task (task)
-    "Go to SRC of TASK in project."
-    (interactive "sTask: ")
-    (let ((file (car (split-string task project-tasks-separator)))
-          (task-name (mapconcat #'identity (cdr (split-string task project-tasks-separator))
-                                project-tasks-separator)))
-      (if (string-empty-p task-name) ;; call on current buffer without separator. Ex: #+call: func()
-          (setq task-name file)
-        (find-file file))
-      (org-babel-goto-named-src-block task-name)))
   (with-eval-after-load 'marginalia
     (add-to-list 'marginalia-prompt-categories '("select task" . project-task)))
   (with-eval-after-load 'embark
@@ -572,23 +563,23 @@
       :init (add-hook 'corfu-mode-hook #'corfu-terminal-mode)))
   (defvar-local corfu-common-old nil)
   (defun corfu-complete-common-or-next ()
-    "Complete common prefix or go to next candidate (@minad/corfu#170)."
+    "Complete common prefix or advance to next candidate."
     (interactive)
-    (if (= corfu--total 1)
-        (if (not (thing-at-point 'filename))
-            (progn
-              (corfu--goto 1)
-              (corfu-insert))))
+    (when (and (= corfu--total 1)
+               (not (thing-at-point 'filename)))
+      (corfu--goto 1)
+      (corfu-insert))
     (let* ((input (car corfu--input))
            (str (if (thing-at-point 'filename) (file-name-nondirectory input) input))
            (pt (length str))
            (common (try-completion str corfu--candidates)))
-      (if (and (> pt 0)
-               (stringp common)
-               (not (string= str common)))
-          (insert (substring common pt))
-        (if (equal common corfu-common-old)
-            (corfu-next)))
+      (cond
+       ((and (> pt 0)
+             (stringp common)
+             (not (string= str common)))
+        (insert (substring common pt)))
+       ((equal common corfu-common-old)
+        (corfu-next)))
       (setq-local corfu-common-old common)))
   (put 'corfu-complete-common-or-next 'completion-predicate #'ignore)
   (defun corfu-enable-in-minibuffer ()
@@ -1055,6 +1046,13 @@ Why not use detached, because detached doesnt run with -A"
 (use-package delsel
   :defer t
   :init (delete-selection-mode))
+(use-package eww
+  :custom (eww-auto-rename-buffer 'title)
+  :config
+  (define-advice eww (:around (oldfun &rest args) always-new-buffer)
+    "Always open EWW in a new buffer."
+    (let ((current-prefix-arg '(4)))
+      (apply oldfun args))))
 
 ;; MAIL
 (use-package gnus :defer t
@@ -1345,7 +1343,6 @@ Why not use detached, because detached doesnt run with -A"
  '(make-backup-files nil) ;; Turn off backup files
  '(backup-by-copying t)
  '(delete-old-versions t)
- '(version-control t)
  '(browse-url-browser-function 'eww-browse-url)
  '(column-number-mode t)
  '(default-input-method "vietnamese-telex")
@@ -1377,6 +1374,7 @@ Why not use detached, because detached doesnt run with -A"
  '(tool-bar-mode nil)
  '(use-dialog-box nil)
  '(vc-follow-symlinks nil)
+ '(version-control t)
  '(warning-suppress-log-types '((comp)))
  '(whitespace-style
    '(face tabs trailing space-before-tab newline empty tab-mark))
@@ -1485,6 +1483,31 @@ Why not use detached, because detached doesnt run with -A"
         (quote
          ((sequence "TODO(t)" "|" "DONE(d)")
           (sequence "IDEA(i)" "STRT(s)" "PAUS(p)" "REVIEW(r)" "AWPY(a)" "|" "KILL(k)")))))
+
+(use-package org-capture
+  :defer t
+  :config
+  (defun org-capture-find-file-location ()
+    "Find a file for org-capture."
+    (let* ((file (org-capture-expand-file
+                  (read-file-name "Select org file: " default-directory))))
+      (set-buffer (or (org-find-base-buffer-visiting file)
+                      (progn (org-capture-put :new-buffer t)
+                             (find-file-noselect file))))
+      (unless (derived-mode-p 'org-mode)
+        (org-display-warning
+         (format "Capture requirement: switching buffer %S to Org mode"
+                 (current-buffer)))
+        (org-mode))
+      (org-capture-put-target-region-and-position)
+      (widen)
+      (goto-char (point-max))
+      (unless (bolp) (insert "\n"))
+      (beginning-of-line 0)))
+
+  (setq org-capture-templates
+        '(("t" "Task" plain (function org-capture-find-file-location)
+           "* TODO %?\n:PROPERTIES:\n:CREATED: %T\n:END:\n%a\n%i"))))
 
 (use-package org-bullets
   :ensure t :defer t
@@ -1680,6 +1703,6 @@ bound to C-c C-r."
           (lambda ()
             (message "init-time %.03fs"
                      (float-time (time-subtract after-init-time before-init-time)))))
-
+(setq custom-file (concat temporary-file-directory "custom.el"))
 (provide '.emacs)
 ;;; .emacs ends here
