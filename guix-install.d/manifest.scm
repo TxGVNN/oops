@@ -6,7 +6,9 @@
 
 (specifications->manifest
    (list "emacs-no-x"
+         "emacs-0x0"
          "emacs-ace-window"
+         "emacs-ansible"
          "emacs-ansible-doc"
          "emacs-anzu"
          "emacs-avy"
@@ -20,6 +22,7 @@
          "emacs-crux"
          "emacs-denote"
          "emacs-detached"
+         "emacs-devdocs"
          "emacs-diredfl"
          "emacs-docker"
          "emacs-docker-compose-mode"
@@ -48,6 +51,7 @@
          "emacs-hl-todo"
          "emacs-inspector"
          "emacs-isearch-mb"
+         "emacs-jq-mode"
          "emacs-magit"
          "emacs-magit-todos"
          "emacs-marginalia"
@@ -75,6 +79,7 @@
          "emacs-vertico"
          "emacs-volatile-highlights"
          "emacs-vundo"
+         "emacs-x509-mode"
          "emacs-with-editor"
          "emacs-yaml-mode"
          "emacs-yasnippet"
