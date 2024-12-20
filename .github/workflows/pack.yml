@@ -47,6 +47,22 @@ jobs:
         guix package -m guix-install.d/manifest.scm
         guix pack -L ./ -f tarball -C xz --root=packages/guix.tar.xz -m guix-install.d/pack.scm --substitute-urls="https://ci.guix.gnu.org https://bordeaux.guix.gnu.org https://txgvnn.github.io/guxti"
 
+  # Deploy job
+  deploy:
+    needs: build
+
+    # Grant GITHUB_TOKEN the permissions required to make a Pages deployment
+    permissions:
+      pages: write      # to deploy to Pages
+      id-token: write   # to verify the deployment originates from an appropriate source
+
+    # Deploy to the github-pages environment
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    runs-on: ubuntu-20.04
+    steps:
     - name: Setup Pages
       uses: actions/configure-pages@v3
     - name: Upload Artifact
@@ -55,4 +71,4 @@ jobs:
         path: 'packages'
     - name: Deploy to GitHub Pages
       id: deployment
-      uses: actions/deploy-pages@v2
+      uses: actions/deploy-pages@v4
