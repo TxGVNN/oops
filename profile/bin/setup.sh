@@ -37,6 +37,11 @@ done
 . "${HOME}/.guix-profile/etc/profile"
 export GUIX_LOCPATH="${HOME}/.guix-profile/lib/locale"
 
+# Set owner
+if [ -n "$USER" ]; then
+    run_as_root chown "$USER": /home/"$USER"/.config -R
+fi
+
 # Direnv
 mkdir -p ~/.config/direnv
 printf '%s\n%s' '[whitelist]' 'prefix = [ "'$WORKSPACE'" ]' > ~/.config/direnv/config.toml
@@ -60,7 +65,6 @@ if [[ "$(id -u)" -eq 0 ]]; then
 else
     run_as_root() { sudo --non-interactive -- "$@"; }
 fi
-
 
 # Codespaces
 if [ -n "$CODESPACES" ]; then
