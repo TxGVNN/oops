@@ -314,8 +314,7 @@ guix_get_bin()
 
     _msg "${INF}Downloading Guix release archive"
 
-    wget --help | grep -q '\--show-progress' \
-        && wget_args=("--no-verbose" "--show-progress")
+    wget_args=("--no-verbose")
 
     if wget "${wget_args[@]}" -P "$dl_path" \
             "${url}/${bin_ver}.tar.xz" "${url}/${bin_ver}.tar.xz.sig"; then
