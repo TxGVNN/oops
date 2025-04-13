@@ -28,9 +28,9 @@ FROM docker.io/library/debian:bookworm-20240110-slim
 RUN apt-get update && \
     DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
     ca-certificates curl dirmngr git git-crypt gnupg less libc6 libstdc++6 \
-    binutils locales netbase sudo tar wget xz-utils procps \
+    binutils locales netbase sudo tar wget xz-utils procps libreadline-dev \
     openssh-server openssh-client lsof bash-completion \
-    man screen iproute2 && \
+    man screen iproute2 docker-compose && \
     rm -rf /var/lib/apt/lists/* && \
     mkdir -p /src /workspaces && \
     echo "en_US.UTF-8 UTF-8" >> /etc/locale.gen && locale-gen

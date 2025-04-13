@@ -110,7 +110,6 @@
          ;; tools
          "direnv"
          "docker-cli"
-         "docker-compose"
          "dtach"
          "ghcli"
          "jq"
