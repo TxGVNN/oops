@@ -67,7 +67,6 @@
 (push 'corfu-terminal package-activated-list)
 (push 'crux package-activated-list)
 (push 'denote package-activated-list)
-(push 'detached package-activated-list)
 (push 'diredfl package-activated-list)
 (push 'docker package-activated-list)
 (push 'docker-compose-mode package-activated-list)

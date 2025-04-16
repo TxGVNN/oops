@@ -18,7 +18,7 @@
 (add-hook 'emacs-startup-hook
           (lambda ()
             (setq file-name-handler-alist doom--file-name-handler-alist)))
-(defvar emacs-config-version "20241220.1030")
+(defvar emacs-config-version "20250416.1029")
 (defvar hidden-minor-modes '(whitespace-mode))
 
 (require 'package)
@@ -64,6 +64,7 @@
   :ensure nil
   :bind (:map vertico-map ("M-DEL" . vertico-directory-delete-word))
   :hook (rfn-eshadow-update-overlay . vertico-directory-tidy))
+
 (use-package marginalia
   :ensure t :defer t
   :hook (after-init . marginalia-mode))
@@ -125,6 +126,7 @@
         consult-project-function nil)
   (setf (alist-get 'slime-repl-mode consult-mode-histories)
         'slime-repl-input-history))
+
 (use-package embark
   :ensure t :defer t
   :bind ("C-c /" . embark-act)
@@ -194,6 +196,20 @@
   (with-eval-after-load 'consult
     (with-eval-after-load 'embark
       (require 'embark-consult))))
+
+(use-package transient :defer t
+  :custom
+  (transient-save-history nil)
+  :config
+  (defun ~eat-sudo ()
+    (interactive)
+    (let ((default-directory "/sudo::~/"))
+      (eat-hist "*sudo*")))
+  (transient-define-prefix ~fast-and-furious()
+    "Some fast functions to run"
+    ["Actions"
+     ("s" "eat" eat-hist)
+     ("S" "eat-sudo" ~eat-sudo)]))
 
 ;;; VERSION CONTROL: git-gutter, magit, git-link
 (use-package git-gutter
@@ -213,6 +229,7 @@
   ("C-x v n" . git-gutter:next-hunk)
   ("C-x v s" . git-gutter:stage-hunk)
   ("C-x v r" . git-gutter:revert-hunk))
+
 (use-package magit
   :ensure t :defer t
   :custom
@@ -239,9 +256,11 @@
       (message magit-link)))
   :bind
   ("C-x v f" . magit-find-file))
+
 (use-package git-link
   :ensure t :defer t
   :config (setq git-link-use-commit t))
+
 (use-package magit-todos
   :ensure t :defer t
   :init
@@ -258,6 +277,7 @@
   (global-set-key (kbd "M-s s") 'isearch-forward-regexp)
   (global-set-key (kbd "M-s %") 'query-replace-regexp)
   (define-key isearch-mode-map (kbd "M-s %") 'isearch-query-replace-regexp))
+
 (use-package anzu
   :ensure t :defer t
   :hook (after-init . global-anzu-mode)
@@ -268,6 +288,7 @@
   (global-set-key [remap query-replace-regexp] 'anzu-query-replace-regexp)
   (define-key isearch-mode-map [remap isearch-query-replace] #'anzu-isearch-query-replace)
   (define-key isearch-mode-map [remap isearch-query-replace-regexp] #'anzu-isearch-query-replace-regexp))
+
 (use-package isearch-mb
   :ensure t :after anzu
   :init (isearch-mb-mode)
@@ -277,7 +298,9 @@
   (define-key isearch-mb-minibuffer-map (kbd "C-w") #'isearch-yank-word)
   (define-key isearch-mb-minibuffer-map (kbd "M-%") 'anzu-isearch-query-replace)
   (define-key isearch-mb-minibuffer-map (kbd "M-s %") 'isearch-query-replace-regexp))
+
 (use-package rg :ensure t :defer t)
+
 (use-package engine-mode
   :ensure t :defer t
   :config
@@ -386,6 +409,7 @@
         envrc-on-lighter '(:propertize " env" face envrc-mode-line-on-face)
         envrc-error-lighter '(:propertize " env" face envrc-mode-line-error-face))
   :hook (after-init . envrc-global-mode))
+
 (use-package perspective
   :ensure t
   :init
@@ -468,23 +492,7 @@
                              (pretty--abbreviate-directory default-directory) command) nil
                      'history command)))
         (ring-remove+insert+extend (persp--get-command-history persp-name)
-                                   (if (string-empty-p input) command input))))
-    (defun detached-compile-custom (command &optional comint)
-      "Override detached-compile(COMMAND COMINT) to use `compilation-read-command-persp'."
-      (interactive
-       (list
-        (let ((command (eval compile-command t)))
-          (if (or compilation-read-command current-prefix-arg)
-              (compilation-read-command-persp command "Detached compile")
-            command))
-        (consp current-prefix-arg)))
-      (let* ((detached-enabled t)
-             (detached-session-origin (or detached-session-origin 'compile))
-             (detached-session-action (or detached-session-action
-                                          detached-compile-session-action))
-             (detached-session-mode (or detached-session-mode 'attached)))
-        (compile command comint)))
-    (advice-add #'detached-compile :override #'detached-compile-custom))
+                                   (if (string-empty-p input) command input)))))
   (with-eval-after-load 'savehist
     (add-to-list 'savehist-additional-variables 'persp-compile-history)))
 ;; project-temp-root
@@ -508,17 +516,21 @@
               ("C-M-f" . 'sp-forward-sexp)
               ("C-M-b" . 'sp-backward-sexp))
   :hook ((markdown-mode prog-mode) . smartparens-mode))
+
 (use-package rainbow-mode
   :ensure t :defer t
   :hook (prog-mode . rainbow-mode)
   :config (add-to-list 'hidden-minor-modes 'rainbow-mode))
+
 (use-package rainbow-delimiters
   :ensure t :defer t
   :hook (prog-mode . rainbow-delimiters-mode))
+
 (use-package volatile-highlights
   :ensure t
   :hook (after-init . volatile-highlights-mode)
   :config (add-to-list 'hidden-minor-modes 'volatile-highlights-mode))
+
 (use-package symbol-overlay
   :ensure t :defer t
   :bind ("M-s H" . symbol-overlay-put)
@@ -527,9 +539,11 @@
   :config
   (set-face-attribute 'symbol-overlay-default-face nil :inherit 'bold :underline t)
   (add-to-list 'hidden-minor-modes 'symbol-overlay-mode))
+
 (use-package hl-todo
   :ensure t :defer t
   :hook (prog-mode . hl-todo-mode))
+
 (use-package beacon
   :ensure t :defer t
   :hook (after-init . beacon-mode)
@@ -640,11 +654,13 @@
     (if prefix
         (consult-yasnippet nil)
       (call-interactively 'completion-at-point))))
+
 (use-package dumb-jump
   :ensure t :defer t
   :init
   (add-hook 'eglot-managed-mode-hook (lambda () (add-hook 'xref-backend-functions 'dumb-jump-xref-activate t t)))
   (add-hook 'xref-backend-functions #'dumb-jump-xref-activate))
+
 (use-package eglot :defer t
   :commands eglot-ensure
   :config
@@ -658,6 +674,7 @@
   (eglot-report-progress nil)
   (eglot-sync-connect nil)
   :after (project flymake))
+
 (use-package pcmpl-args :ensure t :defer 1)
 
 ;;; TOOLS
@@ -669,6 +686,7 @@
   :bind
   ("M-g a" . avy-goto-char)
   ("M-g l" . avy-goto-line))
+
 (use-package crux
   :ensure t :defer t
   :bind
@@ -686,41 +704,36 @@
   ("C-h RET" . crux-find-user-init-file)
   ("C-x / e" . crux-open-with)
   ("C-x 7" . crux-swap-windows))
+
 (use-package expreg
   :ensure t :defer t
   :init (define-key esc-map "@" 'expreg-expand))
+
 (use-package move-text
   :ensure t :defer t
   :bind
   ("M-g <up>" . move-text-up)
   ("M-g <down>" . move-text-down))
+
 (use-package ace-window
   :ensure t :defer t
   :bind ("C-x o" . ace-window)
   :config
   (setq aw-keys '(?a ?s ?d ?f ?g ?h ?j ?k ?l)
         aw-scope (quote frame)))
-(if (version< emacs-version "28.1")
-    (use-package undo-tree
-      :ensure t
-      :init (add-hook 'after-init-hook #'global-undo-tree-mode)
-      :config
-      (setq undo-tree-mode-lighter ""
-            undo-limit 800000           ; 800kb
-            undo-strong-limit 12000000  ; 12mb
-            undo-outer-limit 128000000 ; 128mb
-            undo-tree-history-directory-alist
-            `((".*" . ,temporary-file-directory))))
-  (use-package vundo
-    :ensure t :defer t
-    :init (global-set-key (kbd "C-x u") #'vundo)
-    :config (define-key vundo-mode-map (kbd "q") #'vundo-confirm)))
+
+(use-package vundo
+  :ensure t :defer t
+  :init (global-set-key (kbd "C-x u") #'vundo)
+  :config (define-key vundo-mode-map (kbd "q") #'vundo-confirm))
+
 (use-package pinentry
   :ensure t :defer t
   :config
   (require 'server)
   (setq pinentry--socket-dir server-socket-dir)
   :hook (after-init . pinentry-start))
+
 (use-package multiple-cursors
   :ensure t :defer t
   :bind
@@ -729,6 +742,7 @@
   ("C-c e p" . mc/mark-previous-like-this)
   ("C-c e l" . mc/edit-lines)
   ("C-c e r" . mc/mark-all-in-region))
+
 (use-package helpful
   :ensure t :defer t
   :init
@@ -738,6 +752,7 @@
   (global-set-key [remap describe-macro] 'helpful-macro)
   (global-set-key [remap describe-variable] 'helpful-variable)
   (global-set-key [remap describe-symbol] 'helpful-symbol))
+
 (use-package eev
   :ensure t :defer 1
   :config (require 'eev-load)
@@ -772,51 +787,11 @@
       (unless (get-buffer eepitch-buffer-name)
         (shell eepitch-buffer-name))))
   (global-set-key (kbd "<f8>") #'eepitch-this-line-or-setup))
+
 (use-package so-long
   :ensure t :defer t
   :hook (after-init . global-so-long-mode))
-(use-package detached
-  :ensure t
-  :custom
-  (detached-init-allow-list '(compile org))
-  (detached-terminal-data-command system-type)
-  :init
-  (defun shell-dtach (&optional buffer sockfile)
-    "Start dtach in shell(BUFFER).
-Why not use detached, because detached doesnt run with -A"
-    (interactive (list nil
-                       (and current-prefix-arg
-                            (read-file-name "Sock file: "))))
-    (let* ((explicit-shell-file-name (if (executable-find "dtach")
-                                         "dtach" nil))
-           (file-name (or sockfile
-                          (format "/tmp/%s.dtach"
-                                  (replace-regexp-in-string
-                                   "/" "~" default-directory))))
-           (explicit-dtach-args `("-A" ,file-name "-z"
-                                  "/bin/bash" "--noediting" "-login")))
-      (if buffer
-          (shell buffer)
-        (if sockfile
-            (shell-hist (format "*dtach:%s*" sockfile))
-          (shell-hist (format "*dtach:%s*" default-directory))))))
-  :config
-  (defun project-detached-compile ()
-    "Run `detached-compile' in the project root."
-    (declare (interactive-only compile))
-    (interactive)
-    (let ((default-directory (project-root (project-current t)))
-          (compilation-buffer-name-function
-           (or project-compilation-buffer-name-function
-               compilation-buffer-name-function)))
-      (call-interactively #'detached-compile)))
-  :hook (after-init . detached-init)
-  :bind
-  (([remap async-shell-command] . detached-shell-command)
-   ("C-x M" . detached-compile)
-   ("C-x D" . detached-list-sessions)
-   :map project-prefix-map
-   ("C" . project-detached-compile)))
+
 (use-package 0x0 :ensure t :defer t)
 (use-package dpaste :ensure t :defer t)
 (use-package gist
@@ -825,6 +800,7 @@ Why not use detached, because detached doesnt run with -A"
   (defun gist-ask-for-description-maybe ()
     "Override to return the current file name."
     (file-name-nondirectory (or (buffer-file-name) (buffer-name)))))
+
 (use-package devdocs
   :ensure t :defer t
   :bind ("M-s d" . #'devdocs-lookup))
@@ -868,6 +844,7 @@ Why not use detached, because detached doesnt run with -A"
     ('shell-mode (comint-send-input))
     ('eshell-mode (eshell-send-input))
     ('term-mode (term-send-input))))
+
 (use-package with-editor
   :ensure t :defer t
   :init
@@ -875,10 +852,12 @@ Why not use detached, because detached doesnt run with -A"
   (add-hook 'eshell-mode-hook #'with-editor-export-editor)
   (add-hook 'term-exec-hook   #'with-editor-export-editor)
   (add-hook 'vterm-mode-hook  #'with-editor-export-editor))
+
 (use-package comint :defer t
   :custom
   (comint-input-ignoredups t)
   (comint-input-ring-size 1024))
+
 (use-package shell
   :bind (:map shell-mode-map ("C-c d" . interactive-cd))
   :config
@@ -908,6 +887,7 @@ Why not use detached, because detached doesnt run with -A"
                               #'shell-write-history-on-exit))
       (pop-to-buffer buff display-comint-buffer-action)
       buff)))
+
 (use-package term :defer t
   :hook
   (term-mode . (lambda()
@@ -989,11 +969,13 @@ Why not use detached, because detached doesnt run with -A"
   (tramp-default-method "ssh")
   (tramp-histfile-override nil)
   (tramp-allow-unsafe-temporary-files t))
+
 (use-package ediff
   :ensure nil :defer t
   :config
   (setq ediff-window-setup-function 'ediff-setup-windows-plain)
   (setq ediff-split-window-function 'split-window-horizontally))
+
 (use-package savehist
   :ensure t :defer t
   :custom (savehist-ignored-variables '(eww-prompt-history compile-command))
@@ -1019,6 +1001,7 @@ Why not use detached, because detached doesnt run with -A"
     "Auto revert stale buffers in visible windows, if necessary."
     (dolist (buf (doom-visible-buffers))
       (with-current-buffer buf (doom-auto-revert-buffer-h)))))
+
 (use-package compile :defer t
   :init (global-set-key (kbd "C-x m") 'compile)
   :custom
@@ -1037,15 +1020,18 @@ Why not use detached, because detached doesnt run with -A"
     (with-silent-modifications
       (ansi-color-apply-on-region compilation-filter-start (point))))
   (add-hook 'compilation-filter-hook #'doom-apply-ansi-color-to-compilation-buffer-h))
+
 (use-package epg
   :defer t
   :config (setq epg-pinentry-mode 'loopback))
 (use-package epa
   :defer t
   :config (setq epa-armor t))
+
 (use-package delsel
   :defer t
   :init (delete-selection-mode))
+
 (use-package eww
   :custom (eww-auto-rename-buffer 'title)
   :config
@@ -1108,6 +1094,7 @@ Why not use detached, because detached doesnt run with -A"
                 (vc-mode vc-mode) " "
                 mode-line-modes mode-line-misc-info
                 mode-line-end-spaces))
+
 (use-package which-func
   :after imenu
   :config
@@ -1269,15 +1256,26 @@ Why not use detached, because detached doesnt run with -A"
        (make-directory (file-name-directory ,file) t))
      (with-temp-file ,file
        (insert ,content))))
-(defun ~eat-sudo ()
-  (interactive)
-  (let ((default-directory "/sudo::~/"))
-    (eat-hist "*sudo*")))
-(transient-define-prefix ~fast-and-furious()
-  "Some fast functions to run"
-  ["Actions"
-   ("s" "eat" eat-hist)
-   ("S" "eat-sudo" ~eat-sudo)])
+
+(defun shell-dtach (&optional buffer sockfile)
+  "Start dtach in shell(BUFFER)."
+  (interactive (list nil
+                     (and current-prefix-arg
+                          (read-file-name "Sock file: "))))
+  (let* ((explicit-shell-file-name (if (executable-find "dtach")
+                                       "dtach" nil))
+         (file-name (or sockfile
+                        (format "/tmp/%s.dtach"
+                                (replace-regexp-in-string
+                                 "/" "~" default-directory))))
+         (explicit-dtach-args `("-A" ,file-name "-z"
+                                "/bin/bash" "--noediting" "-login")))
+    (if buffer
+        (shell buffer)
+      (if sockfile
+          (shell-hist (format "*dtach:%s*" sockfile))
+        (shell-hist (format "*dtach:%s*" default-directory))))))
+
 (defun ~import-txgvnn-gpg-key()
   (interactive)
   (url-retrieve "https://github.com/txgvnn.gpg"
@@ -1340,18 +1338,17 @@ Why not use detached, because detached doesnt run with -A"
  ;; If there is more than one, they won't work right.
  '(Buffer-menu-use-header-line nil)
  '(auto-revert-mode-text " ~")
- '(make-backup-files nil) ;; Turn off backup files
  '(backup-by-copying t)
- '(delete-old-versions t)
  '(browse-url-browser-function 'eww-browse-url)
  '(column-number-mode t)
  '(default-input-method "vietnamese-telex")
+ '(delete-old-versions t)
  '(delete-selection-mode t)
  '(eldoc-minor-mode-string " ð")
  '(electric-indent-mode nil)
  '(enable-local-variables :all)
  '(enable-recursive-minibuffers t)
- '(ffap-machine-p-known 'reject t)
+ '(ffap-machine-p-known 'reject)
  '(find-file-existing-other-name nil)
  '(global-hl-line-mode t)
  '(indent-tabs-mode nil)
@@ -1360,6 +1357,7 @@ Why not use detached, because detached doesnt run with -A"
  '(initial-major-mode 'fundamental-mode)
  '(initial-scratch-message nil)
  '(kill-do-not-save-duplicates t)
+ '(make-backup-files nil)
  '(menu-bar-mode nil)
  '(minibuffer-depth-indicate-mode t)
  '(proced-tree-flag t)
@@ -1539,11 +1537,14 @@ Why not use detached, because detached doesnt run with -A"
           (delq (assoc "denote" org-link-parameters) org-link-parameters)))
   :custom (denote-directory "~/.gxt"))
 
-
 (use-package ob-compile :ensure t :defer t
   :config (add-hook 'compilation-finish-functions #'ob-compile-save-file))
 
-(use-package yaml-mode :ensure t :defer t)
+(use-package yaml-mode
+  :ensure t :defer t
+  :hook
+  (yaml-mode  . flymake-mode)
+  (yaml-mode  . flymake-yamllint-setup))
 
 (use-package markdown-mode :ensure t :defer t)
 
@@ -1704,5 +1705,6 @@ bound to C-c C-r."
             (message "init-time %.03fs"
                      (float-time (time-subtract after-init-time before-init-time)))))
 (setq custom-file (concat temporary-file-directory "custom.el"))
+
 (provide '.emacs)
 ;;; .emacs ends here

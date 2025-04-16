@@ -21,7 +21,6 @@
          "emacs-corfu-terminal"
          "emacs-crux"
          "emacs-denote"
-         "emacs-detached"
          "emacs-devdocs"
          "emacs-diredfl"
          "emacs-docker"
