@@ -6,17 +6,17 @@ This repository provides a unified development environment that I need. Almost i
 # Usage
 ## Bare metal
 - Get this package
-```sh
+```
 wget https://txgvnn.github.io/oops/guix.tar.xz -P ~/
 
 ```
 - Setup `.bashrc`
-```sh
+```
 cat >> ~/.bashrc << EOF
 if [ ! -d /gnu ]; then
     echo "Setup Guix..."
     sudo tar -xf ~/guix.tar.xz -C /
-    ln -svf \$(ls -d /gnu/store/*profile) ~/.guix-profile
+    ln -svf \$(ls -d /gnu/store/*profile | head -n1) ~/.guix-profile
     ~/.guix-profile/bin/oops-link
 fi
 export GUIX_PROFILE=~/.guix-profile

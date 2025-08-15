@@ -44,7 +44,6 @@
          "emacs-gist"
          "emacs-git-gutter"
          "emacs-git-link"
-         "emacs-gptel"
          "emacs-guix"
          "emacs-helpful"
          "emacs-hl-todo"
@@ -108,6 +107,8 @@
          "tree-sitter-scheme"
          "tree-sitter-typescript"
          ;; tools
+         "xst"
+         "clipnotify"
          "direnv"
          "dtach"
          "jq"
