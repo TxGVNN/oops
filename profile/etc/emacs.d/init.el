@@ -234,6 +234,8 @@
   :ensure t :defer t
   :custom
   (magit-delete-by-moving-to-trash nil)
+  (magit-branch-direct-configure nil) ;; don't show git variables in magit branch
+  ;; (magit-refresh-status-buffer nil)    ;; should on TRAMP
   :config
   (add-hook 'magit-process-find-password-functions
             'magit-process-password-auth-source)
@@ -910,6 +912,15 @@
       (eat--line-write-input-ring)))
   (advice-add #'eat-line-send-input :after #'eat--line--save-history)
 
+  (defun eat-in(&optional dir buffer-name)
+    "Create a eat BUFFER-NAME (eat-line-mode) and set `eat--line-input-ring-file-name' is HISTFILE."
+    (interactive (list "*eat*" nil))
+    (let* ((default-directory dir)
+           (eat-buffer-name (or buffer-name (format "*eat:%s*" default-directory))))
+      (with-current-buffer (eat)
+        (eat-line-mode))
+      (pop-to-buffer eat-buffer-name display-comint-buffer-action)))
+
   (defun eat-hist(&optional buffer-name histfile)
     "Create a eat BUFFER-NAME (eat-line-mode) and set `eat--line-input-ring-file-name' is HISTFILE."
     (interactive (list "*eat*" nil))
@@ -963,12 +974,24 @@
               (ignore-errors (xclip-mode)))))
 
 ;; BUILTIN
-(use-package tramp :defer t
-  :custom
-  (tramp-show-ad-hoc-proxies t)
-  (tramp-default-method "ssh")
-  (tramp-histfile-override nil)
-  (tramp-allow-unsafe-temporary-files t))
+(use-package tramp :defer t ;; version 27
+  :init
+  (setq tramp-use-scp-direct-remote-copying t
+        tramp-copy-size-limit (* 1024 1024) ;; 1MB
+        tramp-verbose 3
+        tramp-show-ad-hoc-proxies t
+        tramp-default-method "ssh"
+        tramp-histfile-override nil;
+        tramp-allow-unsafe-temporary-files t)
+  :config
+  (connection-local-set-profile-variables
+   'remote-direct-async-process
+   '((tramp-direct-async-process . t)))
+
+  (connection-local-set-profiles
+   '(:application tramp :protocol "scp")
+   'remote-direct-async-process)
+  (setq magit-tramp-pipe-stty-settings 'pty))
 
 (use-package ediff
   :ensure nil :defer t
@@ -1059,6 +1082,10 @@
   (theme-buffet-menu 'end-user)
   :config
   (defun theme-buffet--get-period-keyword() :all)
+  (defun theme-buffet--reload-theme (chosen-theme &optional added-message)
+    "Override `theme-buffet--reload-theme'."
+    (mapc #'disable-theme custom-enabled-themes)
+    (load-theme chosen-theme :no-confirm))
   (theme-buffet--load-random)
   (theme-buffet-timer-mins 15))
 ;;; MODELINE
@@ -1100,9 +1127,9 @@
   :config
   (setq-default header-line-format
                 (list "▶" '((:eval (propertize (pretty--abbreviate-directory default-directory)
-                                               'face 'font-lock-comment-face)) "::"
-                                               (:eval (propertize (or (which-function) "")
-                                                                  'face 'font-lock-function-name-face))))))
+                                               'face 'font-lock-comment-face))
+                            "::" (:eval (propertize (or (which-function) "")
+                                                    'face 'font-lock-function-name-face))))))
 
 ;;; CUSTOMIZE
 (defun pretty--abbreviate-directory (dir)
@@ -1190,15 +1217,16 @@
                     (buffer-file-name))))
     (when filename
       (shell-command (format "stat '%s'; file '%s'" filename filename)))))
-(defun copy-region-to-scratch (&optional file)
+(defun copy-region-to-scratch (&optional prefix file)
   "Copy region to a new scratch or FILE."
-  (interactive)
-  (let* ((string
+  (interactive"P")
+  (let* ((buffer-substring-func (if prefix 'buffer-substring 'buffer-substring-no-properties))
+         (string
           (cond
            ((and (bound-and-true-p rectangle-mark-mode) (use-region-p))
             (mapconcat 'concat (extract-rectangle (region-beginning) (region-end)) "\n"))
-           ((use-region-p) (buffer-substring-no-properties (point) (mark)))
-           (t (buffer-substring-no-properties (point-min) (point-max)))))
+           ((use-region-p) (funcall buffer-substring-func (point) (mark)))
+           (t (funcall buffer-substring-func (point-min) (point-max)))))
          (buffer-name (format "%s_%s" (file-name-base (buffer-name))
                               (format-time-string "%Y%m%dT%H%M%S")))
          (buffer (get-buffer-create buffer-name)))
@@ -1215,7 +1243,7 @@
                   (unless (string-prefix-p "*scratch-" (buffer-name))
                     (format-time-string "%Y%m%dT%H%M%S_")))
           nil (file-name-extension (buffer-name) t))))
-    (copy-region-to-scratch (if prefix (read-file-name "Save to file: " nil filename) filename))))
+    (copy-region-to-scratch nil (if prefix (read-file-name "Save to file: " nil filename) filename))))
 (defun find-file-rec ()
   "Find a file in the current working directory recursively."
   (interactive)
@@ -1296,6 +1324,7 @@
 (global-set-key (kbd "M-s E") 'eww-search-local-help)
 (global-set-key (kbd "M-s f") 'find-file-rec)
 (global-set-key (kbd "C-M-_") 'dabbrev-completion)
+(global-set-key (kbd "C-c h") 'eldoc)
 (global-set-key (kbd "C-x / .") 'delete-trailing-whitespace)
 (global-set-key (kbd "C-x / ;") 'indent-and-delete-trailing-whitespace)
 (global-set-key (kbd "C-x / b") 'rename-buffer)
@@ -1407,6 +1436,7 @@
                      (javascript-mode . js-ts-mode)
                      (typescript-mode . typescript-ts-mode)
                      (c-mode . c-ts-mode)
+                     (java-mode . java-ts-mode)
                      (c++-mode . c++-ts-mode)))
     (add-to-list 'major-mode-remap-alist mapping))
   (setq treesit-extra-load-path '("~/.guix-profile/lib/tree-sitter")))
@@ -1443,7 +1473,6 @@
 (use-package org :defer t
   :hook
   (org-mode . org-indent-mode)
-  (org-mode . flyspell-mode)
   :config
   (defun org-open-at-point-of-babel-call()
     (let* ((context (org-element-lineage (org-element-context) '(babel-call) t))
