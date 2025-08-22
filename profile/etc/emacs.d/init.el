@@ -18,7 +18,7 @@
 (add-hook 'emacs-startup-hook
           (lambda ()
             (setq file-name-handler-alist doom--file-name-handler-alist)))
-(defvar emacs-config-version "20250416.1029")
+(defvar emacs-config-version "20250821.1630")
 (defvar hidden-minor-modes '(whitespace-mode))
 
 (require 'package)

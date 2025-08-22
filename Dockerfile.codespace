@@ -75,8 +75,4 @@ VOLUME ["/tmp", "/run"]
 ARG REVISION
 LABEL org.opencontainers.image.source="https://github.com/TxGVNN/oops"
 LABEL org.opencontainers.image.documentation="https://github.com/TxGVNN/oops/blob/${REVISION}/README.md"
-LABEL org.opencontainers.image.description="Codespace IDE, Powerful by Guix!"
-LABEL devcontainer.metadata="{ \
-    \"remoteUser\": \"vscode\", \
-    \"overrideCommand\": false \
-    }"
+LABEL org.opencontainers.image.description="DevContainer, Powerful by Guix!"
