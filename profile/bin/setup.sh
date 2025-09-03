@@ -1,6 +1,12 @@
 #!/usr/bin/env bash
 [ "${DEBUG:-0}" -eq 0 ] || set -x
 
+if [[ "$(id -u)" -eq 0 ]]; then
+    run_as_root() { "$@"; }
+else
+    run_as_root() { sudo --non-interactive -- "$@"; }
+fi
+
 _link(){
     SRC="$1"
     DST="$2"
@@ -58,13 +64,6 @@ if [ ! -d "${WORKSPACE}/.nvm" ]; then
     curl -o- https://raw.githubusercontent.com/creationix/nvm/v0.33.8/install.sh | NVM_DIR="${WORKSPACE}/.nvm" bash
 fi
 ln -svf "${WORKSPACE}/.nvm" ~/.nvm
-
-
-if [[ "$(id -u)" -eq 0 ]]; then
-    run_as_root() { "$@"; }
-else
-    run_as_root() { sudo --non-interactive -- "$@"; }
-fi
 
 # Codespaces
 if [ -n "$CODESPACES" ]; then
