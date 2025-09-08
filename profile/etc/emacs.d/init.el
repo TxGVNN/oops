@@ -18,7 +18,7 @@
 (add-hook 'emacs-startup-hook
           (lambda ()
             (setq file-name-handler-alist doom--file-name-handler-alist)))
-(defvar emacs-config-version "20250821.1630")
+(defvar emacs-config-version "20250908.1647")
 (defvar hidden-minor-modes '(whitespace-mode))
 
 (require 'package)
@@ -70,7 +70,7 @@
   :hook (after-init . marginalia-mode))
 
 (use-package orderless
-  :ensure t :defer t
+  :ensure t
   :custom
   (completion-styles '(orderless basic))
   (completion-category-defaults nil)
@@ -788,7 +788,8 @@
       (setq-local eepitch-buffer-name (read-buffer-to-switch "Buffer: "))
       (unless (get-buffer eepitch-buffer-name)
         (shell eepitch-buffer-name))))
-  (global-set-key (kbd "<f8>") #'eepitch-this-line-or-setup))
+  (global-set-key (kbd "<f8>") #'eepitch-this-line-or-setup)
+  (global-set-key (kbd "<f9>") #'eepitch-this-line-or-setup))
 
 (use-package so-long
   :ensure t :defer t
@@ -998,6 +999,11 @@
   :config
   (setq ediff-window-setup-function 'ediff-setup-windows-plain)
   (setq ediff-split-window-function 'split-window-horizontally))
+
+(use-package diff-mode
+  :ensure nil :defer t
+  :bind
+  (:map diff-mode-map ("M-o" . mode-line-other-buffer)))
 
 (use-package savehist
   :ensure t :defer t

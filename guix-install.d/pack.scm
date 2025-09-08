@@ -70,7 +70,6 @@
          "emacs-rainbow-delimiters"
          "emacs-rainbow-mode"
          "emacs-rg"
-         "emacs-shell-command+"
          "emacs-smartparens"
          "emacs-symbol-overlay"
          "emacs-terraform-mode"

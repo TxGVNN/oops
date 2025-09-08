@@ -30,7 +30,7 @@ RUN apt-get update && \
     ca-certificates curl dirmngr git git-crypt gnupg less libc6 libstdc++6 \
     binutils locales netbase sudo tar wget xz-utils procps \
     openssh-server openssh-client lsof bash-completion libreadline-dev \
-    man screen iproute2 docker-compose && \
+    man screen iproute2 docker-compose rclone file fuse-overlayfs rsync xsel xdotool && \
     rm -rf /var/lib/apt/lists/* && \
     mkdir -p /src /workspaces && \
     echo "en_US.UTF-8 UTF-8" >> /etc/locale.gen && locale-gen
