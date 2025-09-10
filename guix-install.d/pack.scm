@@ -88,7 +88,6 @@
          "tree-sitter"
          "tree-sitter-bash"
          "tree-sitter-c"
-         "tree-sitter-cpp"
          "tree-sitter-css"
          "tree-sitter-go"
          "tree-sitter-gomod"
