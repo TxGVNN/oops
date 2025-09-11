@@ -35,7 +35,3 @@ EOF
 ```
 ## Github Codespaces
 [![Open in Codespaces](https://img.shields.io/badge/Open%20in%20Codespaces-0b8ca5)](https://github.com/codespaces/new?hide_repo_select=false&ref=main&repo=429365535&skip_quickstart=true)
-
-
-## Gitpod.io
-[![Open in Gitpod](https://gitpod.io/button/open-in-gitpod.svg)](https://gitpod.io/#https://github.com/TxGVNN/oops)

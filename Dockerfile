@@ -1,4 +1,4 @@
-FROM docker.io/library/debian:bookworm-20240110-slim as builder
+FROM docker.io/library/debian:trixie-20250908-slim as builder
 
 RUN apt-get update && \
     DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
@@ -24,7 +24,7 @@ RUN find /src/oops/guix-install.d/gpg_signing_keys -type f -exec gpg --import {}
     rm -rf ~/.cache/guix/inferiors/ && guix gc'
 
 
-FROM docker.io/library/debian:bookworm-20240110-slim
+FROM docker.io/library/debian:trixie-20250908-slim
 RUN apt-get update && \
     DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
     ca-certificates curl dirmngr git git-crypt gnupg less libc6 libstdc++6 \

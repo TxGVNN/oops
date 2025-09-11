@@ -23,12 +23,8 @@ generate_version:
 	@echo "HASH=${HASH}" >> VERSION
 	@echo "BUILD_DATE=$(shell date -u +'%Y-%m-%dT%H:%M:%SZ')" >> VERSION
 
-build/codespace: generate_version
-	docker build -t ${TAG_BUILD} --build-arg=REVISION=$(VERSION) -f Dockerfile.codespace .
-	docker tag ${TAG_BUILD} ${TAG_RELEASE}
-
-build/gitpod: generate_version
-	docker build -t ${TAG_BUILD} --build-arg=REVISION=$(VERSION) -f Dockerfile.gitpod .
+build: generate_version
+	docker build -t ${TAG_BUILD} --build-arg=REVISION=$(VERSION) -f Dockerfile .
 	docker tag ${TAG_BUILD} ${TAG_RELEASE}
 
 push:
