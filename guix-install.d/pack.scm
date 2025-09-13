@@ -105,7 +105,6 @@
          "tree-sitter-scheme"
          "tree-sitter-typescript"
          ;; tools
-         "xst"
          "clipnotify"
          "direnv"
          "dtach"
@@ -113,4 +112,6 @@
          "ripgrep"
          "rsync"
          "socat"
-         "tmate"))
+         "tmate"
+         "xst"
+         "zip"))
