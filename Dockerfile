@@ -55,6 +55,7 @@ RUN groupadd --gid 1000 vscode \
     && ln -s /var/guix/profiles/per-user/vscode/current-guix /home/vscode/.config/guix/current \
     && ln -s /var/guix/profiles/per-user/vscode/guix-profile /home/vscode/.guix-profile \
     && cp /src/oops/guix-install.d/channels.scm /home/vscode/.config/guix/channels.scm \
+    && chown vscode:vscode -R /home/vscode/.config \
     && groupadd --system guixbuild \
     && for i in $(seq -w 1 4); do useradd -g guixbuild -G guixbuild -d /var/empty -s "$(which nologin)" -c "GuixBuilder $i" --system "guixbuilder${i}"; done
 
