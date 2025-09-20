@@ -104,6 +104,7 @@
          "tree-sitter-rust"
          "tree-sitter-scheme"
          "tree-sitter-typescript"
+         "tree-sitter-yaml"
          ;; tools
          "clipnotify"
          "direnv"
