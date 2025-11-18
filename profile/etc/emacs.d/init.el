@@ -18,7 +18,7 @@
 (add-hook 'emacs-startup-hook
           (lambda ()
             (setq file-name-handler-alist doom--file-name-handler-alist)))
-(defvar emacs-config-version "20250913.0939")
+(defvar emacs-config-version "20251118.0636")
 (defvar hidden-minor-modes '(whitespace-mode))
 
 (require 'package)
@@ -85,8 +85,8 @@
     (orderless-matching-styles '(orderless-initialism
                                  orderless-literal
                                  orderless-regexp)))
-  (add-hook 'shell-mode-hook
-            (lambda () (setq-local completion-styles '(substring orderless)))))
+  :hook
+  (shell-mode . (lambda () (setq-local completion-styles '(substring orderless)))))
 
 (use-package consult
   :ensure t :defer t
@@ -459,8 +459,8 @@
         (persp-switch dir)
         (let ((project-current-directory-override dir))
           (call-interactively command)))))
-  ;; find-file
-  (advice-add #'find-file :override #'find-file-persp)
+  ;; NOT override find-file anymore
+  ;; (advice-add #'find-file :override #'find-file-persp)
   (defun find-file-persp (filename &optional wildcards)
     "Override 'find-file(FILENAME WILDCARDS)."
     (interactive
@@ -1084,7 +1084,7 @@
 (use-package theme-buffet
   :ensure t
   :custom
-  (theme-buffet-end-user '(:all (modus-vivendi misterioso tsdh-dark tango-dark)))
+  (theme-buffet-end-user '(:all (modus-vivendi misterioso tsdh-dark)))
   (theme-buffet-menu 'end-user)
   :config
   (defun theme-buffet--get-period-keyword() :all)
@@ -1436,7 +1436,7 @@
   (dolist (mapping '((python-mode . python-ts-mode)
                      (css-mode . css-ts-mode)
                      (sh-mode . bash-ts-mode)
-                     ;; (yaml-mode . yaml-ts-mode)
+                     (yaml-mode . yaml-ts-mode)
                      (js-json-mode . json-ts-mode)
                      (json-mode . json-ts-mode)
                      (javascript-mode . js-ts-mode)
@@ -1463,7 +1463,7 @@
   :config
   ;; Prevent byte complation of .emacs file, which can introduce bugs.
   ;; BUG: Emacs try to install packages that are already installed.
-  (defun elisp-flymake-byte-compile-do-nothing())
+  (defun elisp-flymake-byte-compile-do-nothing(report-fn &rest _args)())
   (advice-add 'elisp-flymake-byte-compile :override #'elisp-flymake-byte-compile-do-nothing))
 
 (defun develop-dot()
