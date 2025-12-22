@@ -18,7 +18,7 @@
 (add-hook 'emacs-startup-hook
           (lambda ()
             (setq file-name-handler-alist doom--file-name-handler-alist)))
-(defvar emacs-config-version "20251118.0636")
+(defvar emacs-config-version "20251222.0938")
 (defvar hidden-minor-modes '(whitespace-mode))
 
 (require 'package)
@@ -994,6 +994,10 @@
    'remote-direct-async-process)
   (setq magit-tramp-pipe-stty-settings 'pty))
 
+(use-package tramp-hlo
+  :ensure t
+  :config (tramp-hlo-setup))
+
 (use-package ediff
   :ensure nil :defer t
   :config
@@ -1495,7 +1499,7 @@
   (define-key org-src-mode-map (kbd "C-c C-c") #'org-edit-src-exit)
   (global-set-key (kbd "C-c l") #'org-store-link)
   (org-babel-do-load-languages
-   'org-babel-do-load-languagesel-load-languages
+   'org-babel-do-load-languages
    '((emacs-lisp . t) (shell . t)))
   (setq org-enforce-todo-dependencies t
         org-adapt-indentation nil
@@ -1585,8 +1589,7 @@
 
 ;; Go: `go install golang.org/x/tools/gopls'
 (use-package go-ts-mode
-  :init
-  (add-to-list 'auto-mode-alist '("\\.go\\'" . go-ts-mode))
+  :defer t
   :config
   (defun go-enable-eglot()
     (interactive)
@@ -1671,9 +1674,7 @@
   (define-key html-mode-map (kbd "M-o") #'mode-line-other-buffer))
 
 (use-package typescript-ts-mode
-  :init
-  (if (treesit-ready-p 'tsx)
-      (add-to-list 'auto-mode-alist '("\\.ts.*\\'" . tsx-ts-mode)))
+  :defer t
   :config
   (defun js-print-debug-at-point()
     "Print debug."
