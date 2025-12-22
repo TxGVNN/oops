@@ -37,7 +37,6 @@
          "emacs-envrc"
          "emacs-erlang"
          "emacs-expreg"
-         "emacs-forge"
          "emacs-gcmh"
          "emacs-geiser"
          "emacs-geiser-guile"
