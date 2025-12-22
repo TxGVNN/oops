@@ -108,7 +108,6 @@
          ;; tools
          "clipnotify"
          "direnv"
-         "docker-cli"
          "dtach"
          "ghcli"
          "jq"
