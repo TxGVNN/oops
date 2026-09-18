@@ -3,7 +3,7 @@ FROM docker.io/library/debian:trixie-20250908-slim as builder
 RUN apt-get update && \
     DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
     ca-certificates curl dirmngr git git-crypt gnupg less libc6 libstdc++6 \
-    binutils locales netbase sudo tar wget xz-utils procps && \
+    binutils locales netbase sudo tar wget xz-utils procps pass && \
     rm -rf /var/lib/apt/lists/* && \
     mkdir -p /src /workspaces
 

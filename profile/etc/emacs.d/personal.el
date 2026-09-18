@@ -2,27 +2,37 @@
 (setq project-temp-root (concat (getenv "WORKSPACE") "/"))
 
 (unless (package-installed-p 'gptel)
-  (package-vc-install "https://github.com/TxGVNN/gptel" "feature/edit-tool-results"))
+  (package-vc-install "https://github.com/txgvnn/gptel" "develop-20260505"))
 
 (use-package gptel
   :defer t
-  :bind ("C-x / g" . gptel-menu)
+  :bind ("C-c a" . gptel-menu)
+  (:map gptel-mode-map ("C-x M-s" . gptel-save-session))
+  :hook
+  (gptel-mode . gptel-highlight-mode)
+  :custom-face
+  (gptel-response-highlight ((t (:background "#202030"))))
   :custom
+  (gptel-log-level 'debug)
   (gptel-cache t)
   (gptel-max-tokens 8192)
   (gptel-default-mode 'org-mode)
+  (gptel-org-branching-context t)
+  (gptel-org-convert-response nil)
   (gptel-prompt-prefix-alist
    '((markdown-mode . "## ")
-     (org-mode . "** ")
+     (org-mode . "@user\n")
      (text-mode . "## ")))
   (gptel-response-prefix-alist
    '((markdown-mode . "### ")
-     (org-mode . "*** ")
+     (org-mode . "@assistant\n")
      (text-mode . "### ")))
   (gptel-use-tools t)
+  (gptel-confirm-tool-calls t)
   (gptel-include-tool-results t)
   (gptel-include-reasoning nil)
-  (gptel-expert-commands t))
+  (gptel-expert-commands t)
+  (gptel-highlight-methods '(face)))
 
 (unless (package-installed-p 'gptel-commit)
   (package-vc-install "https://github.com/lakkiy/gptel-commit")
@@ -39,33 +49,3 @@
   (let ((default-directory "~/.emacs.d/elpa/copilot/"))
     (when (file-exists-p default-directory)
       (shell-command "git checkout 4f51b3c; rm -rf *.elc"))))
-
-(use-package copilot
-  :defer t
-  :commands (copilot-mode copilot-accept-completion-by-line copilot-accept-completion)
-  :init
-  (global-set-key (kbd "C-c p l") #'copilot-accept-completion-by-line)
-  (global-set-key (kbd "C-c p r") #'copilot-accept-completion)
-
-  (defun completion-customize(&optional prefix)
-    "Complete and Yasnippet(PREFIX)."
-    (interactive "P")
-    (if prefix
-        (consult-yasnippet nil)
-      (if (copilot--overlay-visible)
-          (progn
-            (copilot-accept-completion-by-line))
-        (copilot-complete))))
-  (setq copilot-version "1.363.0")
-  :config
-  (global-set-key (kbd "M-]") #'completion-customize)
-  (define-key copilot-mode-map (kbd "M-n") #'copilot-next-completion)
-  (define-key copilot-mode-map (kbd "M-p") #'copilot-previous-completion)
-
-  (defun copilot--ensure-enabled (orig-fun &rest args)
-    (if (and (not (bound-and-true-p copilot-mode))
-             (y-or-n-p "Enable `Copilot' for this buffer? "))
-        (copilot-mode)
-      (apply orig-fun args)))
-  (advice-add 'copilot-accept-completion-by-line :around #'copilot--ensure-enabled)
-  (advice-add 'copilot-accept-completion :around #'copilot--ensure-enabled))

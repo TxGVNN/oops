@@ -18,7 +18,7 @@
 (add-hook 'emacs-startup-hook
           (lambda ()
             (setq file-name-handler-alist doom--file-name-handler-alist)))
-(defvar emacs-config-version "20251222.0938")
+(defvar emacs-config-version "20260918.0441")
 (defvar hidden-minor-modes '(whitespace-mode))
 
 (require 'package)
@@ -91,6 +91,7 @@
 (use-package consult
   :ensure t :defer t
   :bind
+  ("C-x b" . consult-buffer)
   ("M-g g" . consult-goto-line)
   ("M-g M-g" . consult-goto-line)
   ("M-g i" . consult-imenu)
@@ -120,10 +121,14 @@
   (setq xref-show-definitions-function #'consult-xref
         xref-show-xrefs-function #'consult-xref)
   :config
+  (setq consult-project-function nil
+        consult-grep-args
+        '("grep" (consult--grep-exclude-args)
+          "--null --line-buffered --color=never --ignore-case\
+     --with-filename --line-number -I -r -R"))
   (setq register-preview-delay 0
         register-preview-function #'consult-register-format
-        consult-preview-key "C-l"
-        consult-project-function nil)
+        consult-preview-key "C-l")
   (setf (alist-get 'slime-repl-mode consult-mode-histories)
         'slime-repl-input-history))
 
@@ -161,12 +166,6 @@
              (this-command 'project-switch-project))
          (command-execute this-command)))))
   (define-key embark-general-map (kbd "p") #'embark-become-project)
-  ;; perspective
-  (defun embark-persp-to-buffer (&optional _target)
-    (interactive "s") ; prompt for _target and ignore it
-    (embark--quit-and-run
-     (lambda () (command-execute #'persp-switch-to-buffer))))
-  (define-key embark-buffer-map (kbd "P") #'embark-persp-to-buffer)
   ;; region
   (add-to-list 'embark-target-injection-hooks
                '(async-shell-from-region embark--allow-edit))
@@ -246,14 +245,25 @@
            (line-number (string-to-number (car (last parts)))))
       (with-current-buffer (magit-find-file rev file-path)
         (goto-line line-number))))
+  (defun magit-find-file-at-path (project rev path)
+    (let* ((default-directory project)
+           (parts (split-string path "#L"))
+           (file-path (car (split-string path "#")))
+           (line-number (string-to-number (car (last parts)))))
+      (with-current-buffer (magit-find-file rev file-path)
+        (goto-line line-number))))
   (defun magit-link-at-point ()
     (interactive)
-    (let* ((dir (magit-with-toplevel (abbreviate-file-name default-directory)))
-           (commit (magit-with-toplevel (magit-rev-parse "--short" "HEAD")))
-           (file (magit-with-toplevel (magit-file-relative-name)))
-           (line-num (line-number-at-pos))
-           (magit-link (format "(magit-find-file-at-path \"%s\" \"%s\" \"%s#L%s\")"
-                               dir commit file line-num)))
+    (let ((dir (magit-with-toplevel (abbreviate-file-name default-directory)))
+          (commit (magit-with-toplevel (magit-rev-parse "--short" "HEAD")))
+          (magit-link nil))
+      (if (eq major-mode 'magit-log-mode)
+          (setq magit-link (format "(magit-show-commit \"%s\" nil nil \"%s\")"
+                                   commit dir))
+        (let ((file (magit-with-toplevel (magit-file-relative-name)))
+              (line-num (line-number-at-pos)))
+          (setq magit-link (format "(magit-find-file-at-path \"%s\" \"%s\" \"%s#L%s\")"
+                                   dir commit file line-num))))
       (kill-new magit-link)
       (message magit-link)))
   :bind
@@ -273,32 +283,20 @@
   (magit-todos-branch-list nil)
   (magit-todos-update nil))
 
-;;; SEARCHING: ripgrep, anzu, engine-mode
+;;; SEARCHING
 (use-package isearch :defer t
   :init
+  (setq isearch-lazy-count t)
   (global-set-key (kbd "M-s s") 'isearch-forward-regexp)
   (global-set-key (kbd "M-s %") 'query-replace-regexp)
   (define-key isearch-mode-map (kbd "M-s %") 'isearch-query-replace-regexp))
 
-(use-package anzu
-  :ensure t :defer t
-  :hook (after-init . global-anzu-mode)
-  :config
-  (setq anzu-mode-lighter ""
-        anzu-replace-threshold 100)
-  (global-set-key [remap query-replace] 'anzu-query-replace)
-  (global-set-key [remap query-replace-regexp] 'anzu-query-replace-regexp)
-  (define-key isearch-mode-map [remap isearch-query-replace] #'anzu-isearch-query-replace)
-  (define-key isearch-mode-map [remap isearch-query-replace-regexp] #'anzu-isearch-query-replace-regexp))
-
 (use-package isearch-mb
-  :ensure t :after anzu
+  :ensure t
   :init (isearch-mb-mode)
   :config
-  (add-to-list 'isearch-mb--after-exit #'anzu-isearch-query-replace)
   (add-to-list 'isearch-mb--with-buffer #'isearch-yank-word)
   (define-key isearch-mb-minibuffer-map (kbd "C-w") #'isearch-yank-word)
-  (define-key isearch-mb-minibuffer-map (kbd "M-%") 'anzu-isearch-query-replace)
   (define-key isearch-mb-minibuffer-map (kbd "M-s %") 'isearch-query-replace-regexp))
 
 (use-package rg :ensure t :defer t)
@@ -315,22 +313,26 @@
     "https://pkgs.alpinelinux.org/contents?file=%s&path=&name=&branch=edge&arch=x86_64")
   (defengine ubuntu-package
     "https://packages.ubuntu.com/search?keywords=%s&searchon=names&suite=all&section=all"))
+(use-package github-explorer
+  :ensure t :defer t)
 
-;;; WORKSPACE: project, perspective, envrc
+;;; WORKSPACE: project, envrc
 (use-package project :defer t
   :ensure t
   :custom
   (project-vc-extra-root-markers '(".pc"))
   (project-switch-use-entire-map t)
   (project-compilation-buffer-name-function 'project-prefixed-buffer-name)
+  (project-mode-line-face 'success)
   :bind
   (:map project-prefix-map
-        ("j" . project-jump-persp)
+        ("b" . consult-project-buffer)
         ("s" . project-eat)
         ("S" . project-shell)
         ("M-x" . project-execute-extended-command)
         ("v" . magit-project-status))
   :config
+  (add-to-list 'mode-line-misc-info '(:eval (project-mode-line-format)))
   (advice-add #'project-find-file :override #'project-find-file-cd)
   (defun project-find-file-cd (&optional include-all)
     "Project-find-file set default-directory is project-root"
@@ -371,12 +373,7 @@
     (interactive)
     (require 'embark nil t)
     (embark-chroot (project-root (project-current t))))
-  (define-key project-prefix-map (kbd "/") #'embark-on-project)
-  (defun project-jump-persp ()
-    "Just jump to persp of project."
-    (interactive)
-    (let ((dir (project-root (project-current t))))
-      (persp-switch dir))))
+  (define-key project-prefix-map (kbd "/") #'embark-on-project))
 
 (use-package project-tasks
   :ensure t :defer t
@@ -386,9 +383,14 @@
   (project-tasks-files '(".*\.org$"))
   :init
   (with-eval-after-load 'embark
-    (define-key embark-file-map (kbd "P") #'project-tasks-in-dir))
-  :bind (:map project-prefix-map ("P" . project-tasks))
+    (define-key embark-file-map (kbd "t") #'project-tasks-in-dir))
+  :bind (:map project-prefix-map ("t" . project-tasks))
   :config
+  (defun project-tasks--eval(task)
+    "Execute a source block with name TASK."
+    (save-excursion
+      (org-babel-goto-named-src-block task)
+      (org-babel-execute-src-block)))
   (with-eval-after-load 'marginalia
     (add-to-list 'marginalia-prompt-categories '("select task" . project-task)))
   (with-eval-after-load 'embark
@@ -412,91 +414,6 @@
         envrc-error-lighter '(:propertize " env" face envrc-mode-line-error-face))
   :hook (after-init . envrc-global-mode))
 
-(use-package perspective
-  :ensure t
-  :init
-  (setq persp-mode-prefix-key (kbd "C-z")
-        persp-initial-frame-name "0")
-  (persp-mode)
-  :bind
-  ("C-x b" . persp-switch-to-buffer*)
-  ("C-x x" . persp-switch-last)
-  ("<f5>" . persp-switch-last)
-  (:map perspective-map ("z" . perspective-map))
-  :config
-  ;; buffer
-  (with-eval-after-load 'marginalia
-    (add-to-list 'marginalia-command-categories '(persp-switch-to-buffer* . buffer)))
-  ;; hack local var when switch
-  (add-hook 'persp-switch-hook #'hack-dir-local-variables-non-file-buffer)
-  ;; persp-ibuffer
-  (add-hook 'ibuffer-hook
-            (lambda ()
-              (persp-ibuffer-set-filter-groups)
-              (unless (eq ibuffer-sorting-mode 'alphabetic)
-                (ibuffer-do-sort-by-alphabetic))))
-  (with-eval-after-load 'ibuffer
-    (require 'ibuf-ext)
-    (advice-add #'ibuffer-visit-buffer :override #'ibuffer-visit-buffer-persp)
-    (defun ibuffer-visit-buffer-persp (&optional single)
-      "Override 'ibuffer-visit-buffer with support perspective."
-      (interactive "P")
-      (let ((buffer (ibuffer-current-buffer t)))
-        (if (bound-and-true-p persp-mode)
-            (unless (persp-is-current-buffer buffer)
-              (let ((other-persp (persp-buffer-in-other-p buffer)))
-                (persp-switch (cdr other-persp)))))
-        (switch-to-buffer buffer)
-        (when single (delete-other-windows)))))
-  (with-eval-after-load 'project
-    (defun project-switch-project (dir)
-      "Override 'project-switch-project with support perspective."
-      (interactive (list (project-prompt-project-dir)))
-      (let ((command (if (symbolp project-switch-commands)
-                         project-switch-commands
-                       (project--switch-project-command)))
-            (default-directory dir))
-        (persp-switch dir)
-        (let ((project-current-directory-override dir))
-          (call-interactively command)))))
-  ;; NOT override find-file anymore
-  ;; (advice-add #'find-file :override #'find-file-persp)
-  (defun find-file-persp (filename &optional wildcards)
-    "Override 'find-file(FILENAME WILDCARDS)."
-    (interactive
-     (find-file-read-args "Find file: "
-                          (confirm-nonexistent-file-or-buffer)))
-    (if-let* ((bound-and-true-p persp-mode)
-              (pr (ignore-errors
-                    (project-current nil (file-name-directory filename))))
-              (dir (project-root pr)))
-        (persp-switch dir))
-    (let ((value (find-file-noselect filename nil nil wildcards)))
-      (if (listp value)
-          (mapcar 'pop-to-buffer-same-window (nreverse value))
-        (pop-to-buffer-same-window value))))
-  ;; compile
-  (with-eval-after-load 'compile
-    (defvar persp-compile-history (make-hash-table :test 'equal))
-    (defun persp--get-command-history (persp)
-      (or (gethash persp persp-compile-history)
-          (puthash persp (make-ring 16) persp-compile-history)))
-    (advice-add #'compilation-read-command :override #'compilation-read-command-persp)
-    (defun compilation-read-command-persp (command &optional prompt)
-      "Override compilation-read-command (COMMAND)."
-      (let* ((persp-name (if (bound-and-true-p persp-mode)
-                             (persp-name (persp-curr)) "0"))
-             (history
-              (ring-elements (persp--get-command-history persp-name)))
-             (command (or (car history) command))
-             (input (read-shell-command
-                     (format "%s `%s' [%s]: " (or prompt "Compile")
-                             (pretty--abbreviate-directory default-directory) command) nil
-                     'history command)))
-        (ring-remove+insert+extend (persp--get-command-history persp-name)
-                                   (if (string-empty-p input) command input)))))
-  (with-eval-after-load 'savehist
-    (add-to-list 'savehist-additional-variables 'persp-compile-history)))
 ;; project-temp-root
 (defvar project-temp-root "~/")
 (defun project-temp-M-x (&optional prefix)
@@ -542,6 +459,8 @@
   (set-face-attribute 'symbol-overlay-default-face nil :inherit 'bold :underline t)
   (add-to-list 'hidden-minor-modes 'symbol-overlay-mode))
 
+(setq project-mode-line-face '(:foreground "#0ab" :weight bold ))
+
 (use-package hl-todo
   :ensure t :defer t
   :hook (prog-mode . hl-todo-mode))
@@ -551,7 +470,7 @@
   :hook (after-init . beacon-mode)
   :config (add-to-list 'hidden-minor-modes 'beacon-mode))
 
-;;; COMPLETION CODE: corfu, yasnippet, eglot, dumb-jump, pcmpl-args
+;;; COMPLETION CODE: corfu, tempel, eglot, dumb-jump, pcmpl-args
 (use-package corfu
   :ensure t :defer t
   :custom
@@ -620,42 +539,32 @@
 
 (use-package cape
   :ensure t :defer t
-  :bind (("C-c p p" . completion-at-point) ;; capf
-         ("C-c p t" . complete-tag)        ;; etags
-         ("C-c p d" . cape-dabbrev)        ;; or dabbrev-completion
-         ("C-c p h" . cape-history)
-         ("C-c p f" . cape-file)
-         ("C-c p k" . cape-keyword)
-         ("C-c p s" . cape-symbol)
-         ("C-c p a" . cape-abbrev)
-         ("C-c p i" . cape-ispell)
-         ("C-c p l" . cape-line)
-         ("C-c p w" . cape-dict))
+  :bind ("C-c p" . cape-prefix-map)
   :config
   (defun cape-backends-add-to-corfu-mode ()
     (add-to-list 'completion-at-point-functions #'cape-file :append)
     (add-to-list 'completion-at-point-functions #'cape-dabbrev :append))
   :hook (corfu-mode . cape-backends-add-to-corfu-mode))
 
-(use-package yasnippet
-  :ensure t :defer t
-  :hook (after-init . yas-global-mode)
-  :config
-  (setq yas-lighter " ¥")
-  (define-key yas-minor-mode-map [(tab)] nil)
-  (define-key yas-minor-mode-map (kbd "TAB") nil))
-(use-package yasnippet-snippets
-  :ensure t :defer t
-  :config (add-to-list 'yas-snippet-dirs "~/.gxt/emacs/snippets"))
-(use-package consult-yasnippet
-  :ensure t :defer t
-  :init (global-set-key (kbd "M-]") #'completion-customize)
-  (defun completion-customize(&optional prefix)
-    "Complete and Yasnippet(PREFIX)."
-    (interactive "P")
-    (if prefix
-        (consult-yasnippet nil)
-      (call-interactively 'completion-at-point))))
+;; Configure Tempel
+(use-package tempel
+  :ensure t
+  :custom
+  (tempel-path "~/.gxt/emacs/templates")
+  :bind (("M-+" . tempel-complete) ;; Alternative tempel-expand
+         ("M-*" . tempel-insert))
+  :init
+  ;; Setup completion at point
+  (defun tempel-setup-capf ()
+    ;; Add the Tempel Capf to `completion-at-point-functions'.  `tempel-expand'
+    ;; only triggers on exact matches. We add `tempel-expand' *before* the main
+    ;; programming mode Capf, such that it will be tried first.
+    (setq-local completion-at-point-functions
+                (cons #'tempel-expand completion-at-point-functions)))
+  :hook
+  (prog-mode . tempel-setup-capf)
+  (conf-mode . tempel-setup-capf)
+  (text-mode . tempel-setup-capf))
 
 (use-package dumb-jump
   :ensure t :defer t
@@ -692,9 +601,10 @@
 (use-package crux
   :ensure t :defer t
   :bind
+  ("M-o" . crux-switch-to-previous-buffer)
   ("C-^" . crux-top-join-line)
   ("C-a" . crux-move-beginning-of-line)
-  ("C-o" . crux-smart-open-line-above)
+  ("C-o" . crux-smart-open-line)
   ("C-c c" . crux-create-scratch-buffer)
   ("C-c d" . crux-duplicate-current-line-or-region)
   ("C-c M-d" . crux-duplicate-and-comment-current-line-or-region)
@@ -705,7 +615,8 @@
   ("C-c S" . crux-visit-shell-buffer)
   ("C-h RET" . crux-find-user-init-file)
   ("C-x / e" . crux-open-with)
-  ("C-x 7" . crux-swap-windows))
+  ("C-x 7" . crux-swap-windows)
+  (:map diff-mode-map ("M-o" . crux-switch-to-previous-buffer)))
 
 (use-package expreg
   :ensure t :defer t
@@ -716,13 +627,6 @@
   :bind
   ("M-g <up>" . move-text-up)
   ("M-g <down>" . move-text-down))
-
-(use-package ace-window
-  :ensure t :defer t
-  :bind ("C-x o" . ace-window)
-  :config
-  (setq aw-keys '(?a ?s ?d ?f ?g ?h ?j ?k ?l)
-        aw-scope (quote frame)))
 
 (use-package vundo
   :ensure t :defer t
@@ -758,9 +662,6 @@
 (use-package eev
   :ensure t :defer 1
   :config (require 'eev-load)
-  (define-abbrev-table 'global-abbrev-table
-    '(("eekcopy" " (eek \"C-x o C-p C-e C-SPC C-a M-w C-n C-x O C-e RET C-a C-y\") ;; copy output")
-      ("datetime" "$(date +%Y%m%dT%H%M%S)")))
   (defun eepitch-get-buffer-name-line()
     (if (not (eq eepitch-buffer-name ""))
         (format "ξ:%s "eepitch-buffer-name) ""))
@@ -796,7 +697,9 @@
   :hook (after-init . global-so-long-mode))
 
 (use-package 0x0 :ensure t :defer t)
-(use-package dpaste :ensure t :defer t)
+(use-package dpaste :ensure t :defer t
+  :config
+  (add-to-list 'dpaste-supported-modes-alist '(markdown-mode . "md")))
 (use-package gist
   :ensure t :defer t
   :config
@@ -940,6 +843,7 @@
       (pop-to-buffer eat-buffer-name display-comint-buffer-action)))
   :config
   (define-key eat-line-mode-map [xterm-paste] #'xterm-paste)
+  (define-key eat-semi-char-mode-map (kbd "M-o") #'crux-switch-to-previous-buffer)
   (defun eat-kill-process-confirm (orig-fun &rest args)
     (if (y-or-n-p "Kill process? ")
         (apply orig-fun args)))
@@ -985,6 +889,8 @@
         tramp-histfile-override nil;
         tramp-allow-unsafe-temporary-files t)
   :config
+  (require 'tramp-hlo)
+  (tramp-hlo-setup)
   (connection-local-set-profile-variables
    'remote-direct-async-process
    '((tramp-direct-async-process . t)))
@@ -995,8 +901,7 @@
   (setq magit-tramp-pipe-stty-settings 'pty))
 
 (use-package tramp-hlo
-  :ensure t
-  :config (tramp-hlo-setup))
+  :ensure t :defer t)
 
 (use-package ediff
   :ensure nil :defer t
@@ -1004,15 +909,16 @@
   (setq ediff-window-setup-function 'ediff-setup-windows-plain)
   (setq ediff-split-window-function 'split-window-horizontally))
 
-(use-package diff-mode
-  :ensure nil :defer t
-  :bind
-  (:map diff-mode-map ("M-o" . mode-line-other-buffer)))
-
 (use-package savehist
   :ensure t :defer t
   :custom (savehist-ignored-variables '(eww-prompt-history compile-command))
-  :hook (after-init . savehist-mode))
+  :hook
+  (savehist-save .
+                 (lambda ()
+                   (setq kill-ring
+                         (mapcar #'substring-no-properties
+                                 (cl-remove-if-not #'stringp kill-ring)))))
+  (after-init . savehist-mode))
 
 (use-package autorevert
   ;; revert buffers when their files/state have changed
@@ -1041,6 +947,7 @@
   (compilation-always-kill t)       ; kill compilation process before starting another
   (compilation-ask-about-save nil)  ; save all buffers on `compile'
   (compilation-scroll-output t)
+  (ansi-color-for-compilation-mode t)
   :config
   (defun compile-to-buffer (command buffer-name &optional comint)
     "Run compile COMMAND and output to BUFFER-NAME. Overwrite if exists."
@@ -1048,11 +955,26 @@
            (lambda (_)
              (format "*compile:%s*" buffer-name))))
       (compile command comint)))
-  (defun doom-apply-ansi-color-to-compilation-buffer-h ()
-    "Applies ansi codes to the compilation buffers."
-    (with-silent-modifications
-      (ansi-color-apply-on-region compilation-filter-start (point))))
-  (add-hook 'compilation-filter-hook #'doom-apply-ansi-color-to-compilation-buffer-h))
+  (add-hook 'compilation-filter-hook #'ansi-color-compilation-filter)
+  (defvar project-compile-history (make-hash-table :test 'equal))
+  (defun project--get-command-history (project)
+    (or (gethash project project-compile-history)
+        (puthash project (make-ring 16) project-compile-history)))
+  (advice-add #'compilation-read-command :override #'compilation-read-command-project)
+  (defun compilation-read-command-project (command &optional prompt)
+    "Override compilation-read-command (COMMAND) per project."
+    (let* ((project-name (pretty--abbreviate-directory default-directory))
+           (history
+            (ring-elements (project--get-command-history project-name)))
+           (command (or (car history) command))
+           (input (read-shell-command
+                   (format "%s `%s' [%s]: " (or prompt "Compile")
+                           (pretty--abbreviate-directory default-directory) command) nil
+                   'history command)))
+      (ring-remove+insert+extend (project--get-command-history project-name)
+                                 (if (string-empty-p input) command input))))
+  (with-eval-after-load 'savehist
+    (add-to-list 'savehist-additional-variables 'project-compile-history)))
 
 (use-package epg
   :defer t
@@ -1065,7 +987,20 @@
   :defer t
   :init (delete-selection-mode))
 
-(use-package eww
+(use-package winner
+  :init (winner-mode)
+  :config
+  (defun toggle-delete-other-windows ()
+    "Delete other windows in frame if any, or restore previous window config."
+    (interactive)
+    (if (and winner-mode
+             (equal (selected-window) (next-window)))
+        (winner-undo)
+      (delete-other-windows)))
+
+  (global-set-key (kbd "C-x 1") #'toggle-delete-other-windows))
+
+(use-package eww :defer t
   :custom (eww-auto-rename-buffer 'title)
   :config
   (define-advice eww (:around (oldfun &rest args) always-new-buffer)
@@ -1237,7 +1172,9 @@
             (mapconcat 'concat (extract-rectangle (region-beginning) (region-end)) "\n"))
            ((use-region-p) (funcall buffer-substring-func (point) (mark)))
            (t (funcall buffer-substring-func (point-min) (point-max)))))
-         (buffer-name (format "%s_%s" (file-name-base (buffer-name))
+         (buffer-name (format "%s_%s" (if (buffer-file-name)
+                                          (file-name-base (buffer-file-name))
+                                        (buffer-name))
                               (format-time-string "%Y%m%dT%H%M%S")))
          (buffer (get-buffer-create buffer-name)))
     (with-current-buffer buffer
@@ -1329,7 +1266,6 @@
 (global-set-key (kbd "C-x C-@") 'pop-to-mark-command)
 (global-set-key (kbd "C-x C-SPC") 'pop-to-mark-command)
 (global-set-key (kbd "C-x C-b") 'ibuffer)
-(global-set-key (kbd "M-o") 'mode-line-other-buffer)
 (global-set-key (kbd "M-s e") 'eww)
 (global-set-key (kbd "M-s E") 'eww-search-local-help)
 (global-set-key (kbd "M-s f") 'find-file-rec)
@@ -1370,6 +1306,10 @@
       create-lockfiles nil
       auto-save-file-name-transforms `((".*" ,temporary-file-directory t))
       backup-directory-alist `((".*" . ,temporary-file-directory)))
+(setq-default bidi-display-reordering 'left-to-right
+              bidi-paragraph-direction 'left-to-right)
+(setq bidi-inhibit-bpa t)
+(setq redisplay-skip-fontification-on-input t)
 (custom-set-variables
  ;; custom-set-variables was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
@@ -1380,6 +1320,7 @@
  '(backup-by-copying t)
  '(browse-url-browser-function 'eww-browse-url)
  '(column-number-mode t)
+ '(cursor-in-non-selected-windows nil)
  '(default-input-method "vietnamese-telex")
  '(delete-old-versions t)
  '(delete-selection-mode t)
@@ -1387,13 +1328,14 @@
  '(electric-indent-mode nil)
  '(enable-local-variables :all)
  '(enable-recursive-minibuffers t)
- '(ffap-machine-p-known 'reject)
+ '(ffap-machine-p-known 'reject t)
  '(find-file-existing-other-name nil)
  '(global-hl-line-mode t)
+ '(highlight-nonselected-windows nil)
  '(indent-tabs-mode nil)
  '(inhibit-default-init nil)
  '(inhibit-startup-screen t)
- '(initial-major-mode 'fundamental-mode)
+ '(initial-major-mode 'org-mode)
  '(initial-scratch-message nil)
  '(kill-do-not-save-duplicates t)
  '(make-backup-files nil)
@@ -1401,7 +1343,9 @@
  '(minibuffer-depth-indicate-mode t)
  '(proced-tree-flag t)
  '(read-quoted-char-radix 16)
+ '(repeat-mode t)
  '(ring-bell-function #'ignore)
+ '(save-interprogram-paste-before-kill t)
  '(scroll-bar-mode nil)
  '(shell-command-prompt-show-cwd t)
  '(show-paren-mode t)
@@ -1498,6 +1442,7 @@
   (add-to-list 'hidden-minor-modes 'org-indent-mode)
   (define-key org-src-mode-map (kbd "C-c C-c") #'org-edit-src-exit)
   (global-set-key (kbd "C-c l") #'org-store-link)
+  (global-set-key (kbd "C-c C-l") #'org-insert-link)
   (org-babel-do-load-languages
    'org-babel-do-load-languages
    '((emacs-lisp . t) (shell . t)))
@@ -1509,6 +1454,7 @@
         org-edit-src-content-indentation 0
         org-tags-match-list-sublevels 'indented
         org-log-done 'time
+        org-use-property-inheritance t
         org-agenda-prefix-format
         (quote ((agenda . " %i %-12:c%?-12t%-5e% s")
                 (todo . " %i %-12:c %-5e")
@@ -1561,20 +1507,7 @@
   :ensure t :defer t
   :commands (org-tanglesync-process-buffer-interactive))
 
-(use-package denote
-  :ensure t :defer t
-  :bind
-  ("C-c n n" . denote-subdirectory)
-  ("C-c n o" . denote-open-or-create)
-  :init
-  (with-eval-after-load 'org
-    (setq org-link-parameters ;; I want to use built-in link by filepath instead.
-          (delq (assoc "denote" org-link-parameters) org-link-parameters)))
-  :config
-  (with-eval-after-load 'org
-    (setq org-link-parameters ;; I want to use built-in link by filepath instead.
-          (delq (assoc "denote" org-link-parameters) org-link-parameters)))
-  :custom (denote-directory "~/.gxt"))
+
 
 (use-package ob-compile :ensure t :defer t
   :config (add-hook 'compilation-finish-functions #'ob-compile-save-file))
@@ -1595,16 +1528,7 @@
     (interactive)
     (when (fboundp 'eglot-ensure)
       (add-hook 'go-ts-mode-hook #'eglot-ensure)
-      (add-hook 'before-save-hook #'eglot-format-buffer t t)))
-  (defun go-print-debug-at-point()
-    "Print debug."
-    (interactive)
-    (let ((var (substring-no-properties (thing-at-point 'symbol))))
-      (move-end-of-line nil)
-      (newline-and-indent)
-      (insert (format "fmt.Printf(\"D: %s@%s %s, %%+v\\n\", %s)"
-                      (file-name-nondirectory (buffer-file-name))
-                      (substring (md5 (format "%s%s" (emacs-pid) (current-time))) 0 4) var var)))))
+      (add-hook 'before-save-hook #'eglot-format-buffer t t))))
 
 ;; Python: `pip install python-lsp-server[all]'
 (use-package python
@@ -1627,17 +1551,7 @@
                  (if (not word) (error "No pydoc args given") word) input))))
     (ignore-errors (kill-buffer "*PYDOCS*"))
     (shell-command (concat "python -c \"from pydoc import help;help(\'" w "\')\"") "*PYDOCS*")
-    (view-buffer-other-window "*PYDOCS*" t 'kill-buffer))
-  (defun python-print-debug-at-point()
-    "Print debug."
-    (interactive)
-    (let ((var (substring-no-properties (thing-at-point 'symbol))))
-      (move-end-of-line nil)
-      (newline-and-indent)
-      (insert (format "print(\"D: %s@%s %s: {} {}\".format(type(%s), %s))"
-                      (file-name-nondirectory (buffer-file-name))
-                      (substring (md5 (format "%s%s" (emacs-pid) (current-time))) 0 4)
-                      var var var)))))
+    (view-buffer-other-window "*PYDOCS*" t 'kill-buffer)))
 
 ;; Erlang
 (use-package erlang :ensure t :defer t)
@@ -1671,21 +1585,7 @@
 (use-package sgml-mode
   :defer t
   :config
-  (define-key html-mode-map (kbd "M-o") #'mode-line-other-buffer))
-
-(use-package typescript-ts-mode
-  :defer t
-  :config
-  (defun js-print-debug-at-point()
-    "Print debug."
-    (interactive)
-    (let ((var (substring-no-properties (thing-at-point 'symbol))))
-      (move-end-of-line nil)
-      (newline-and-indent)
-      (insert (format "console.log(\"D: %s@%s %s: \", %s);"
-                      (file-name-nondirectory (buffer-file-name))
-                      (substring (md5 (format "%s%s" (emacs-pid) (current-time))) 0 4)
-                      var var)))))
+  (define-key html-mode-map (kbd "M-o") #'crux-switch-to-previous-buffer))
 
 (defun develop-gitlab-ci()
   "Gitlab-CI development."
