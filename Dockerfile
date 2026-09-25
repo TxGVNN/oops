@@ -15,11 +15,11 @@ RUN groupadd --gid 1000 robot && \
 COPY guix-install.d /src/oops/guix-install.d
 RUN find /src/oops/guix-install.d/gpg_signing_keys -type f -exec gpg --import {} \; && \
     bash /src/oops/guix-install.d/guix-install.sh && \
-    start-stop-daemon --user root --pidfile /tmp/guix.sock --background --start --exec /var/guix/profiles/per-user/root/current-guix/bin/guix-daemon -- --build-users-group=guixbuild --disable-chroot -c 2 -M 2 --substitute-urls="https://ci.guix.gnu.org https://bordeaux.guix.gnu.org https://txgvnn.github.io/guxti" && \
+    start-stop-daemon --user root --pidfile /tmp/guix.sock --background --start --exec /var/guix/profiles/per-user/root/current-guix/bin/guix-daemon -- --build-users-group=guixbuild --disable-chroot -c 2 -M 2 --substitute-urls="https://cache-cdn.guix.moe https://ci.guix.gnu.org https://bordeaux.guix.gnu.org" && \
     sleep 1 && \
     sudo -H -u robot bash -c 'mkdir -p ~/.config/guix && \
     cp /src/oops/guix-install.d/channels.scm ~/.config/guix/channels.scm && \
-    guix pull && \
+    guix pull --allow-downgrades --disable-authentication && \
     ~/.config/guix/current/bin/guix package -m /src/oops/guix-install.d/manifest.scm && \
     rm -rf ~/.cache/guix/inferiors/ && guix gc'
 

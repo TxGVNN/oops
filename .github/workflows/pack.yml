@@ -45,7 +45,7 @@ jobs:
         mkdir -p packages
         wget -O - https://txgvnn.github.io/guxti/signing-key.pub | sudo guix archive --authorize
         guix package -m guix-install.d/manifest.scm
-        guix pack -L ./ -f tarball -C xz --root=packages/guix.tar.xz -m guix-install.d/pack.scm --substitute-urls="https://ci.guix.gnu.org https://bordeaux.guix.gnu.org https://txgvnn.github.io/guxti"
+        guix pack -L ./ -f tarball -C xz --root=packages/guix.tar.xz -m guix-install.d/pack.scm --substitute-urls="https://cache-cdn.guix.moe https://ci.guix.gnu.org https://bordeaux.guix.gnu.org"
     - name: Setup Pages
       uses: actions/configure-pages@v3
     - name: Upload Artifact

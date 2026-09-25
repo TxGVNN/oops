@@ -1,7 +1,6 @@
 (list (channel
        (name 'guxti)
-       (branch "master")
-       (commit "a1630772218ce7ea03e24121d8eb00d5e13c745d")
+       (branch "update-guix")
        (url "https://github.com/TxGVNN/guxti")
        (introduction
         (make-channel-introduction
@@ -11,7 +10,8 @@
 
       (channel
        (name 'guix)
-       (branch "master")
+       (branch "emacs-team")
+       (commit "0a50703abd5bfb27c7e130644db3045032604751")
        (url "https://codeberg.org/guix/guix.git")
        (introduction
         (make-channel-introduction

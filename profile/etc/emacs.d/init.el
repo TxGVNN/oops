@@ -1,4 +1,4 @@
-;;; .emacs --- initialization file.
+;;; .emacs --- initialization file.  -*- lexical-binding: t; -*-
 ;;; Commentary:
 ;;; _____  _     __    _      _      _
 ;;;  | |  \ \_/ / /`_ \ \  / | |\ | | |\ |
@@ -18,7 +18,7 @@
 (add-hook 'emacs-startup-hook
           (lambda ()
             (setq file-name-handler-alist doom--file-name-handler-alist)))
-(defvar emacs-config-version "20260918.0441")
+(defvar emacs-config-version "20260925.0913")
 (defvar hidden-minor-modes '(whitespace-mode))
 
 (require 'package)
@@ -409,9 +409,22 @@
         (envrc-mode 1)
         (apply fn args))))
   (advice-add 'project-compile :around #'my/ensure-current-project)
-  (setq envrc-none-lighter nil
-        envrc-on-lighter '(:propertize " env" face envrc-mode-line-on-face)
-        envrc-error-lighter '(:propertize " env" face envrc-mode-line-error-face))
+  (defun envrc--lighter ()
+    "Return a colourised version of `envrc--status' for use in the mode line."
+    (list " env["
+          (list :propertize (symbol-name envrc--status)
+                'face
+                (pcase envrc--status
+                  (`on 'envrc-mode-line-on-face)
+                  (`error 'envrc-mode-line-error-face)
+                  (`denied 'envrc-mode-line-error-face)
+                  (`none 'envrc-mode-line-none-face)))
+          ;; Cache this detail to avoid overhead in redisplay, e.g. when scrolling,
+          ;; and don't display it at all for remote files
+          (when envrc--running
+            (list :propertize "*" 'face 'envrc-mode-line-running-face))
+          "]"))
+  (setq envrc-lighter '(:eval (envrc--lighter)))
   :hook (after-init . envrc-global-mode))
 
 ;; project-temp-root
@@ -491,11 +504,6 @@
         ("S-TAB" . corfu-previous)
         ([backtab] . corfu-previous))
   :config
-  (unless (display-graphic-p)
-    (use-package corfu-terminal
-      ;; FIXME: codeberg.org/akib/emacs-corfu-terminal#18
-      :ensure t :defer t
-      :init (add-hook 'corfu-mode-hook #'corfu-terminal-mode)))
   (defvar-local corfu-common-old nil)
   (defun corfu-complete-common-or-next ()
     "Complete common prefix or advance to next candidate."
@@ -791,7 +799,7 @@
         (comint-read-input-ring t)
         (set-process-sentinel (get-buffer-process (current-buffer))
                               #'shell-write-history-on-exit))
-      (pop-to-buffer buff display-comint-buffer-action)
+      (pop-to-buffer buff)
       buff)))
 
 (use-package term :defer t
@@ -823,7 +831,7 @@
            (eat-buffer-name (or buffer-name (format "*eat:%s*" default-directory))))
       (with-current-buffer (eat)
         (eat-line-mode))
-      (pop-to-buffer eat-buffer-name display-comint-buffer-action)))
+      (pop-to-buffer eat-buffer-name)))
 
   (defun eat-hist(&optional buffer-name histfile)
     "Create a eat BUFFER-NAME (eat-line-mode) and set `eat--line-input-ring-file-name' is HISTFILE."
@@ -840,7 +848,17 @@
         (setq-local eat--line-input-ring-file-name history-file)
         (ignore-errors
           (eat-line-load-input-history-from-file eat--line-input-ring-file-name "bash")))
-      (pop-to-buffer eat-buffer-name display-comint-buffer-action)))
+      (pop-to-buffer eat-buffer-name)))
+  (defun eat-run (buffer-name program)
+    "Start PROGRAM in a new eat terminal buffer named BUFFER-NAME."
+    (interactive "sBuffer name: \nsProgram: ")
+    (let* ((eat-buffer-name buffer-name)
+           (cmd (split-string-shell-command program))
+           (prog (car cmd))
+           (args (cdr cmd)))
+      (with-current-buffer (apply #'eat prog nil args)
+        (eat-line-mode))
+      (pop-to-buffer eat-buffer-name)))
   :config
   (define-key eat-line-mode-map [xterm-paste] #'xterm-paste)
   (define-key eat-semi-char-mode-map (kbd "M-o") #'crux-switch-to-previous-buffer)
@@ -1328,7 +1346,7 @@
  '(electric-indent-mode nil)
  '(enable-local-variables :all)
  '(enable-recursive-minibuffers t)
- '(ffap-machine-p-known 'reject t)
+ '(ffap-machine-p-known 'reject)
  '(find-file-existing-other-name nil)
  '(global-hl-line-mode t)
  '(highlight-nonselected-windows nil)
@@ -1341,6 +1359,7 @@
  '(make-backup-files nil)
  '(menu-bar-mode nil)
  '(minibuffer-depth-indicate-mode t)
+ '(package-vc-selected-packages '((monet :url "https://github.com/stevemolitor/monet")))
  '(proced-tree-flag t)
  '(read-quoted-char-radix 16)
  '(repeat-mode t)
@@ -1360,6 +1379,13 @@
  '(whitespace-style
    '(face tabs trailing space-before-tab newline empty tab-mark))
  '(x-select-request-type '(COMPOUND_TEXT UTF8_STRING STRING TEXT)))
+(custom-set-faces
+ ;; custom-set-faces was added by Custom.
+ ;; If you edit it by hand, you could mess it up, so be careful.
+ ;; Your init file should contain only one such instance.
+ ;; If there is more than one, they won't work right.
+ )
+
 
 ;;; PATCHING
 (if (boundp 'use-short-answers)
