@@ -1,6 +1,6 @@
 (list (channel
        (name 'guxti)
-       (branch "update-guix")
+       (branch "master")
        (url "https://github.com/TxGVNN/guxti")
        (introduction
         (make-channel-introduction
